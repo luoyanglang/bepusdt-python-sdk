@@ -8,10 +8,33 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Telegram Message
+      - name: Send to Telegram Group
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          to: ${{ secrets.TELEGRAM_GROUP_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            🎉 *BEpusdt Python SDK 新版本发布！*
+            
+            📦 版本: `${{ github.event.release.tag_name }}`
+            
+            📝 更新内容:
+            ${{ github.event.release.body }}
+            
+            🔗 [查看详情](${{ github.event.release.html_url }})
+            
+            💻 安装命令:
+            ```bash
+            pip install --upgrade bepusdt
+            ```
+            
+            📚 文档: https://github.com/luoyanglang/bepusdt-python-sdk
+      
+      - name: Send to Telegram Channel
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHANNEL_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           format: markdown
           message: |
