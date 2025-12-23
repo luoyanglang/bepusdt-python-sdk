@@ -6,7 +6,16 @@ from dataclasses import dataclass
 
 
 class OrderStatus(IntEnum):
-    """订单状态枚举"""
+    """订单状态枚举
+    
+    回调行为说明：
+        - WAITING (1): 订单创建后每分钟推送一次，直到支付或超时，不重试
+        - SUCCESS (2): 支付成功后推送，失败会重试（间隔 2,4,8,16...分钟，最多10次）
+        - TIMEOUT (3): 订单超时后推送一次，不重试
+    
+    注意：
+        商户端收到回调后，应返回状态码 200 和内容 "ok" 表示接收成功
+    """
     WAITING = 1  # 等待支付
     SUCCESS = 2  # 支付成功
     TIMEOUT = 3  # 支付超时

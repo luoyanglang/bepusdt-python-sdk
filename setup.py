@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="bepusdt",
-    version="0.2.0",
+    version="0.2.1",
     author="luoyanglang",
     author_email="luoyanglang@users.noreply.github.com",
     description="BEpusdt 支付网关 Python SDK",

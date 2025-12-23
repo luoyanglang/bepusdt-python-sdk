@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-12-23
+
+### Changed
+- 优化 SDK 初始化信息显示，改为进程级别只显示一次，添加 emoji 标识
+- 改用标准 User-Agent header，移除自定义 header，提升兼容性
+- 调试日志改为 DEBUG 级别，并对签名进行脱敏处理，提升安全性
+
+### Added
+- 完善 OrderStatus 枚举文档，详细说明 3 种回调状态的行为差异
+- 完善 verify_callback 方法文档，添加回调处理示例和注意事项
+
 ## [0.2.0] - 2025-12-23
 
 ### Added
@@ -33,5 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复 amount 参数类型导致的签名错误
 - 优化签名算法，正确处理空值
 
+[0.2.1]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.2.1
 [0.2.0]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.2.0
 [0.1.0]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.1.0

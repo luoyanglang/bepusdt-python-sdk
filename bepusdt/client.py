@@ -1,10 +1,14 @@
 """BEpusdt 客户端"""
 
+import logging
 import requests
 from typing import Optional, Dict, Any, List
 from .signature import generate_signature, verify_signature
 from .models import Order, TradeType
 from .exceptions import APIError
+
+# 进程级别标志，确保 SDK 信息只显示一次
+_SDK_INFO_SHOWN = False
 
 
 class BEpusdtClient:
@@ -28,10 +32,19 @@ class BEpusdtClient:
     """
     
     def __init__(self, api_url: str, api_token: str, timeout: int = 30):
+        global _SDK_INFO_SHOWN
+        
         self.api_url = api_url.rstrip("/")
         self.api_token = api_token
         self.timeout = timeout
         self.session = requests.Session()
+        
+        # 只在进程中显示一次 SDK 信息
+        if not _SDK_INFO_SHOWN:
+            from . import __version__, __url__
+            print(f"🎉 BEpusdt Python SDK v{__version__} 已初始化！")
+            print(f"📦 GitHub: {__url__}")
+            _SDK_INFO_SHOWN = True
     
     def create_order(
         self,
@@ -120,10 +133,12 @@ class BEpusdtClient:
         
         params["signature"] = generate_signature(params, self.api_token)
         
-        # 调试日志
-        import logging
+        # 调试日志（DEBUG 级别，且脱敏）
         logger = logging.getLogger(__name__)
-        logger.info(f"创建订单请求参数: {params}")
+        if logger.isEnabledFor(logging.DEBUG):
+            debug_params = {k: v for k, v in params.items() if k != 'signature'}
+            debug_params['signature'] = '***'
+            logger.debug(f"创建订单请求参数: {debug_params}")
         
         url = f"{self.api_url}/api/v1/order/create-transaction"
         response = self._post(url, params)
@@ -216,16 +231,39 @@ class BEpusdtClient:
         """验证支付回调签名
         
         Args:
-            callback_data: 回调数据字典
+            callback_data: 回调数据字典，包含以下字段：
+                - trade_id: BEpusdt 交易ID
+                - order_id: 商户订单号
+                - amount: 请求金额（CNY）
+                - actual_amount: 实际支付金额（USDT/TRX/USDC）
+                - token: 收款地址
+                - block_transaction_id: 区块链交易ID
+                - status: 订单状态（1=等待支付, 2=支付成功, 3=支付超时）
+                - signature: 签名
         
         Returns:
             bool: 签名是否有效
         
+        回调行为说明：
+            - status=1 (等待支付): 订单创建后每分钟推送一次，直到支付或超时，不重试
+            - status=2 (支付成功): 支付完成后推送，失败会重试（间隔 2,4,8,16...分钟，最多10次）
+            - status=3 (支付超时): 订单超时后推送一次，不重试
+        
+        注意：
+            验证成功后，应返回 HTTP 200 和内容 "ok"，否则系统会认为回调失败
+        
         Example:
-            >>> callback_data = request.get_json()
-            >>> if client.verify_callback(callback_data):
-            ...     # 处理支付成功
-            ...     pass
+            >>> @app.route('/notify', methods=['POST'])
+            >>> def notify():
+            ...     data = request.get_json()
+            ...     if client.verify_callback(data):
+            ...         if data['status'] == OrderStatus.SUCCESS:
+            ...             # 处理支付成功
+            ...             return "ok", 200
+            ...         elif data['status'] == OrderStatus.TIMEOUT:
+            ...             # 处理订单超时
+            ...             return "ok", 200
+            ...     return "fail", 400
         """
         received_signature = callback_data.get("signature")
         if not received_signature:
@@ -248,7 +286,11 @@ class BEpusdtClient:
             APIError: 请求失败或响应解析失败
         """
         try:
-            resp = self.session.post(url, json=data, timeout=self.timeout)
+            from . import __version__, __url__
+            headers = {
+                "User-Agent": f"bepusdt-python-sdk/{__version__} (+{__url__})"
+            }
+            resp = self.session.post(url, json=data, headers=headers, timeout=self.timeout)
             resp.raise_for_status()
             return resp.json()
         except requests.exceptions.RequestException as e:
@@ -269,7 +311,11 @@ class BEpusdtClient:
             APIError: 请求失败或响应解析失败
         """
         try:
-            resp = self.session.get(url, timeout=self.timeout)
+            from . import __version__, __url__
+            headers = {
+                "User-Agent": f"bepusdt-python-sdk/{__version__} (+{__url__})"
+            }
+            resp = self.session.get(url, headers=headers, timeout=self.timeout)
             resp.raise_for_status()
             return resp.json()
         except requests.exceptions.RequestException as e:
