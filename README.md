@@ -5,7 +5,7 @@
 # BEpusdt Python SDK
 
 <p align="center">
-<a href="https://pypi.org/project/bepusdt/"><img src="https://badge.fury.io/py/bepusdt.svg" alt="PyPI version"></a>
+<a href="https://pypi.org/project/bepusdt/"><img src="https://img.shields.io/pypi/v/bepusdt.svg" alt="PyPI version"></a>
 <a href="https://pypi.org/project/bepusdt/"><img src="https://img.shields.io/pypi/pyversions/bepusdt.svg" alt="Python Support"></a>
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 <a href="https://github.com/v03413/bepusdt"><img src="https://img.shields.io/badge/BEpusdt-v1.22+-blue" alt="BEpusdt"></a>
