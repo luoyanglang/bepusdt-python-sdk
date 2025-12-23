@@ -65,3 +65,9 @@ Thumbs.db
 
 # Version file
 bepusdt/_version.py
+
+# Internal docs (not for public)
+IMPORTANT_NOTES.md
+CONTRIBUTING.md
+Makefile
+.github/
