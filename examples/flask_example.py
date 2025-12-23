@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # 初始化客户端
 client = BEpusdtClient(
-    api_url="https://pay.kuaijieyi.com",
+    api_url="https://your-bepusdt-server.com",
     api_token="your-api-token"
 )
 
