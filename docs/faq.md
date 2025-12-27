@@ -99,6 +99,117 @@ rate="+0.3"
 docker logs bepusdt
 ```
 
+### Q: 签名错误（签名验证失败）⚠️
+
+这是最常见的问题！签名错误通常有以下几种原因：
+
+#### 1. API Token 不匹配
+
+**问题：** 客户端使用的 `api_token` 和服务端配置的 `auth_token` 不一致
+
+**解决：**
+```python
+# 检查客户端配置
+client = BEpusdtClient(
+    api_url="https://your-server.com",
+    api_token="your-api-token"  # 必须和服务端一致！
+)
+```
+
+服务端配置（`conf.toml`）：
+```toml
+auth_token = "your-api-token"  # 必须和客户端一致！
+```
+
+#### 2. 参数类型或格式错误
+
+**问题：** 参数值的类型不对，比如：
+- amount 应该是数字，传了字符串
+- 参数值有多余的空格
+- 参数值为空字符串
+
+**解决：**
+```python
+# ✅ 正确
+order = client.create_order(
+    order_id="ORDER_001",
+    amount=42,  # 数字类型
+    notify_url="https://example.com/notify"
+)
+
+# ❌ 错误
+order = client.create_order(
+    order_id="ORDER_001",
+    amount="42",  # 字符串类型会导致签名错误
+    notify_url="https://example.com/notify "  # 末尾有空格
+)
+```
+
+#### 3. 参数缺失或多余
+
+**问题：** 必需参数没传，或者传了不该传的参数
+
+**解决：**
+```python
+# 必需参数
+order = client.create_order(
+    order_id="ORDER_001",      # 必需
+    amount=10.0,               # 必需
+    notify_url="https://..."   # 必需
+)
+```
+
+#### 4. 如何调试签名问题
+
+开启 DEBUG 日志查看签名详情：
+
+```python
+import logging
+
+# 开启 DEBUG 日志
+logging.basicConfig(level=logging.DEBUG)
+
+# 创建订单时会输出签名前的参数
+client = BEpusdtClient(...)
+order = client.create_order(...)
+```
+
+输出示例：
+```
+DEBUG:bepusdt.client:创建订单请求参数: {'order_id': 'ORDER_001', 'amount': 42, 'notify_url': '...', 'signature': '***'}
+```
+
+#### 5. 手动验证签名
+
+如果还是有问题，可以手动计算签名对比：
+
+```python
+import hashlib
+
+# 1. 准备参数（不包含 signature）
+params = {
+    "order_id": "ORDER_001",
+    "amount": 42,
+    "notify_url": "https://example.com/notify",
+    "redirect_url": "https://example.com/redirect"
+}
+
+# 2. 按键排序
+sorted_params = sorted(params.items())
+
+# 3. 拼接参数
+param_str = "&".join([f"{k}={v}" for k, v in sorted_params])
+print(f"参数字符串: {param_str}")
+
+# 4. 加上 token 计算 MD5
+api_token = "your-api-token"
+sign_str = param_str + api_token
+signature = hashlib.md5(sign_str.encode("utf-8")).hexdigest().lower()
+print(f"签名: {signature}")
+```
+
+对比输出的签名和服务端日志中的签名是否一致。
+
 ### Q: 未收到回调通知
 
 可能原因：
@@ -107,12 +218,27 @@ docker logs bepusdt
 3. 防火墙阻止
 4. 回调返回不是 "ok"
 
-### Q: 签名验证失败
+### Q: 回调签名验证失败
 
 确保：
 1. API Token 正确
 2. 回调数据完整
 3. 没有修改回调数据
+
+```python
+@app.route('/notify', methods=['POST'])
+def notify():
+    data = request.get_json()
+    
+    # 验证签名
+    if not client.verify_callback(data):
+        return "fail", 400
+    
+    # 处理业务逻辑
+    # ...
+    
+    return "ok", 200  # 必须返回 "ok"
+```
 
 ## 开发问题
 

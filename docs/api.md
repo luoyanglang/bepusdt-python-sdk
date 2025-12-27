@@ -18,7 +18,9 @@ from bepusdt import BEpusdtClient
 client = BEpusdtClient(
     api_url="https://your-bepusdt-server.com",
     api_token="your-api-token",
-    timeout=30  # 可选，默认 30 秒
+    timeout=30,         # 可选，默认 30 秒
+    max_retries=3,      # 可选，默认 3 次
+    retry_delay=1.0     # 可选，默认 1.0 秒
 )
 ```
 
@@ -26,6 +28,15 @@ client = BEpusdtClient(
 - `api_url` (str): BEpusdt 服务器地址
 - `api_token` (str): API 认证 Token
 - `timeout` (int, 可选): 请求超时时间，默认 30 秒
+- `max_retries` (int, 可选): 最大重试次数，默认 3 次
+- `retry_delay` (float, 可选): 初始重试延迟（秒），默认 1.0 秒（指数退避：1s, 2s, 4s）
+
+**重试机制：**
+- 网络连接失败 (`NetworkError`) - 自动重试
+- 请求超时 (`TimeoutError`) - 自动重试
+- 服务器错误 5xx (`ServerError`) - 自动重试
+- 客户端错误 4xx (`ClientError`) - 不重试
+- 其他错误 - 不重试
 
 ---
 
@@ -210,7 +221,7 @@ OrderStatus.TIMEOUT = 3   # 支付超时
 
 ### BEpusdtError
 
-SDK 基础异常类。
+SDK 基础异常类，所有其他异常的父类。
 
 ### SignatureError
 
@@ -218,12 +229,108 @@ SDK 基础异常类。
 
 ### APIError
 
-API 请求错误。
+通用 API 请求错误。
 
 **属性：**
 - `message` (str): 错误消息
 - `status_code` (int, 可选): HTTP 状态码
 - `response` (dict, 可选): 完整响应数据
+
+### NetworkError
+
+网络连接失败（可重试）。
+
+**使用场景：**
+- DNS 解析失败
+- 连接被拒绝
+- 网络不可达
+
+### TimeoutError
+
+请求超时（可重试）。
+
+**使用场景：**
+- 连接超时
+- 读取超时
+
+### ServerError
+
+服务器错误 5xx（可重试）。
+
+**属性：**
+- `message` (str): 错误消息
+- `status_code` (int): HTTP 状态码（500-599）
+
+**使用场景：**
+- 500 Internal Server Error
+- 502 Bad Gateway
+- 503 Service Unavailable
+
+### ClientError
+
+客户端错误 4xx（不可重试）。
+
+**属性：**
+- `message` (str): 错误消息
+- `status_code` (int): HTTP 状态码（400-499）
+
+**使用场景：**
+- 400 Bad Request
+- 401 Unauthorized
+- 404 Not Found
+
+### ValidationError
+
+参数验证错误（不可重试）。
+
+**使用场景：**
+- 参数格式错误
+- 必填参数缺失
+
+---
+
+## 错误处理示例
+
+```python
+from bepusdt import (
+    BEpusdtClient, 
+    NetworkError, TimeoutError, ServerError, ClientError
+)
+
+client = BEpusdtClient(
+    api_url="https://your-server.com",
+    api_token="your-token",
+    max_retries=3
+)
+
+try:
+    order = client.create_order(
+        order_id="ORDER_001",
+        amount=10.0,
+        notify_url="https://your-domain.com/notify"
+    )
+    print(f"✅ 订单创建成功: {order.trade_id}")
+    
+except NetworkError as e:
+    # 网络连接失败（已重试 3 次）
+    print(f"❌ 网络错误: {e}")
+    
+except TimeoutError as e:
+    # 请求超时（已重试 3 次）
+    print(f"❌ 超时: {e}")
+    
+except ServerError as e:
+    # 服务器错误（已重试 3 次）
+    print(f"❌ 服务器错误 {e.status_code}: {e}")
+    
+except ClientError as e:
+    # 客户端错误（不会重试）
+    print(f"❌ 请求错误 {e.status_code}: {e}")
+    
+except Exception as e:
+    # 其他错误
+    print(f"❌ 未知错误: {e}")
+```
 
 ---
 

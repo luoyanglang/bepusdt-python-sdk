@@ -24,3 +24,34 @@ class APIError(BEpusdtError):
         super().__init__(message)
         self.status_code = status_code
         self.response = response
+
+
+class NetworkError(BEpusdtError):
+    """网络连接错误（可重试）"""
+    pass
+
+
+class TimeoutError(BEpusdtError):
+    """请求超时错误（可重试）"""
+    pass
+
+
+class ServerError(BEpusdtError):
+    """服务器错误 5xx（可重试）"""
+    
+    def __init__(self, message: str, status_code: int = None):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class ClientError(BEpusdtError):
+    """客户端错误 4xx（不可重试）"""
+    
+    def __init__(self, message: str, status_code: int = None):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class ValidationError(BEpusdtError):
+    """参数验证错误"""
+    pass

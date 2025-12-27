@@ -5,10 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.2] - 2025-12-27
 
 ### Added
-- 添加 GitHub Actions 自动化工作流（自动发布到 PyPI + Telegram 通知）
+- 新增自动重试机制，支持网络错误、超时、服务器错误自动重试
+- 新增 5 种异常类型：`NetworkError`、`TimeoutError`、`ServerError`、`ClientError`、`ValidationError`
+- 新增 `max_retries` 和 `retry_delay` 配置参数
+- 新增重试机制示例代码 `examples/retry_example.py`
+
+### Changed
+- 优化错误处理，根据 HTTP 状态码抛出不同异常
+- 改进 `_post()` 和 `_get()` 方法，集成重试机制
+- 更新 API 文档，添加重试机制和异常处理说明
+
+### Fixed
+- 提升网络不稳定环境下的请求成功率
+
 
 ## [0.2.1] - 2025-12-23
 
@@ -49,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复 amount 参数类型导致的签名错误
 - 优化签名算法，正确处理空值
 
+[0.2.2]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.2.2
 [0.2.1]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.2.1
 [0.2.0]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.2.0
 [0.1.0]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.1.0

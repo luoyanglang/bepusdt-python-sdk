@@ -7,9 +7,9 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="bepusdt",
-    version="0.2.1",
+    version="0.2.2",
     author="luoyanglang",
-    author_email="luoyanglang@users.noreply.github.com",
+    author_email="hanwanlonga@gmail.com",
     description="BEpusdt 支付网关 Python SDK",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -45,5 +45,9 @@ setup(
         "Bug Reports": "https://github.com/luoyanglang/bepusdt-python-sdk/issues",
         "Source": "https://github.com/luoyanglang/bepusdt-python-sdk",
         "Documentation": "https://github.com/luoyanglang/bepusdt-python-sdk#readme",
+        "Telegram": "https://t.me/luoyanglang",
+        "Telegram Group": "https://t.me/langgepython",  # 群组
+        "Telegram Channel": "https://t.me/langgefabu",  # 频道
+
     },
 )
