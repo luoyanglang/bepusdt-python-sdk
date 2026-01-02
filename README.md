@@ -22,6 +22,7 @@ BEpusdt 支付网关的 Python SDK，让 Python 开发者能够快速集成 USDT
 - 🌐 **多链支持** - 支持 10+ 区块链网络
 - 💰 **多币种** - USDT、USDC、TRX
 - 🔄 **自动重试** - 网络错误自动重试，提升成功率
+- 📱 **二维码生成** - 一键生成收款地址二维码
 - 📝 **类型提示** - 完整的 IDE 智能提示
 - ✅ **生产就绪** - 经过真实环境测试
 - 🔄 **完全兼容** - 完整支持 BEpusdt API
@@ -43,6 +44,9 @@ BEpusdt 支付网关的 Python SDK，让 Python 开发者能够快速集成 USDT
 
 ```bash
 pip install bepusdt
+
+# 如需二维码功能
+pip install bepusdt[qrcode]
 ```
 
 ## 🚀 快速开始
@@ -79,6 +83,36 @@ print(f"🔗 支付链接: {order.payment_url}")
 
 ## 🔧 核心功能
 
+### 错误处理
+
+SDK 会自动处理网络错误和服务器临时故障：
+
+```python
+from bepusdt.exceptions import ServerError, NetworkError, TimeoutError
+
+try:
+    order = client.create_order(...)
+except ServerError as e:
+    # 服务器错误 5xx（已自动重试）
+    print(f"服务器错误: {e}")
+except NetworkError as e:
+    # 网络连接失败（已自动重试）
+    print(f"网络错误: {e}")
+except TimeoutError as e:
+    # 请求超时（已自动重试）
+    print(f"超时: {e}")
+```
+
+**自动重试配置：**
+```python
+client = BEpusdtClient(
+    api_url="https://your-server.com",
+    api_token="your-api-token",
+    max_retries=3,      # 最多重试 3 次
+    retry_delay=1.0     # 初始延迟 1 秒（指数退避）
+)
+```
+
 ### 创建订单
 
 ```python
@@ -109,6 +143,24 @@ def notify():
         # 处理支付成功
         return "ok", 200
     return "fail", 400
+```
+
+### 生成二维码
+
+```python
+# 创建订单后生成收款地址二维码
+order = client.create_order(...)
+
+# 方式1：保存为图片文件
+qr = order.generate_qrcode()
+qr.save("payment_qr.png")
+
+# 方式2：获取 Base64（用于 API 返回）
+qr_base64 = order.get_qrcode_base64()
+
+# 方式3：获取 Data URI（直接用于 HTML img src）
+data_uri = order.get_qrcode_data_uri()
+# <img src="{data_uri}">
 ```
 
 ## 🏝️ 交流反馈

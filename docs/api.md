@@ -61,7 +61,7 @@ order = client.create_order(
 
 **参数：**
 - `order_id` (str): 商户订单号，必须唯一
-- `amount` (float): 支付金额（CNY）
+- `amount` (float): 支付金额（**人民币 CNY**）⭐
 - `notify_url` (str): 支付回调地址（必须 HTTPS）
 - `redirect_url` (str, 可选): 支付成功跳转地址
 - `trade_type` (str, 可选): 支付类型，默认 `TradeType.USDT_TRC20`
@@ -70,6 +70,11 @@ order = client.create_order(
 - `rate` (float | str, 可选): 自定义汇率
 
 **返回：** `Order` 对象
+
+**重要说明：**
+- `amount` 参数是**人民币金额**，系统会根据汇率自动计算加密货币数量
+- 返回的 `order.actual_amount` 是**实际需要支付的加密货币数量**（USDT/TRX/USDC）
+- 例如：`amount=10.0` (10元人民币) → `actual_amount=1.35` (1.35 USDT)
 
 **异常：** `APIError`
 
@@ -195,13 +200,15 @@ is_valid = client.verify_callback(callback_data)
 **属性：**
 - `trade_id` (str): BEpusdt 交易ID
 - `order_id` (str): 商户订单号
-- `amount` (float): 请求金额（CNY）
-- `actual_amount` (float): 实际支付金额
+- `amount` (float): 请求金额（**人民币 CNY**）
+- `actual_amount` (float): 实际支付金额（**加密货币 USDT/TRX/USDC**）⭐
 - `token` (str): 收款地址
 - `expiration_time` (int): 过期时间（秒）
 - `payment_url` (str): 支付链接
 - `status` (OrderStatus, 可选): 订单状态
 - `block_transaction_id` (str, 可选): 区块链交易ID
+
+**重要：** 用户实际需要支付的是 `actual_amount`（加密货币），而不是 `amount`（人民币）。
 
 ### OrderStatus
 

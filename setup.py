@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="bepusdt",
-    version="0.2.2",
+    version="0.2.3",
     author="luoyanglang",
     author_email="hanwanlonga@gmail.com",
     description="BEpusdt 支付网关 Python SDK",
@@ -32,12 +32,16 @@ setup(
         "requests>=2.25.0",
     ],
     extras_require={
+        "qrcode": [
+            "qrcode[pil]>=7.0.0",
+        ],
         "dev": [
             "pytest>=7.0.0",
             "pytest-cov>=3.0.0",
             "black>=22.0.0",
             "flake8>=4.0.0",
             "mypy>=0.950",
+            "qrcode[pil]>=7.0.0",
         ],
     },
     keywords="bepusdt payment usdt trx cryptocurrency",

@@ -18,6 +18,45 @@ pip install -e .
 
 ## 使用问题
 
+### Q: amount 和 actual_amount 有什么区别？⭐
+
+**重要概念：**
+
+- `amount` - 订单金额（**人民币 CNY**）
+- `actual_amount` - 实际支付金额（**加密货币 USDT/TRX/USDC**）
+
+**示例：**
+```python
+order = client.create_order(
+    order_id="ORDER_001",
+    amount=10.0,  # 10 元人民币
+    notify_url="https://your-domain.com/notify"
+)
+
+print(order.amount)         # 10.0 (CNY)
+print(order.actual_amount)  # 1.35 (USDT，根据汇率计算)
+```
+
+**为什么这样设计？**
+
+BEpusdt 是为中国用户设计的支付网关，商户通常以人民币定价商品。系统会根据实时汇率自动计算需要支付的加密货币数量。
+
+**如果想直接指定 USDT 金额怎么办？**
+
+目前 BEpusdt 不支持直接指定加密货币金额，但可以通过自定义汇率实现：
+
+```python
+# 假设想收 5 USDT，当前汇率是 7.2
+# 计算：5 * 7.2 = 36 CNY
+order = client.create_order(
+    order_id="ORDER_001",
+    amount=36.0,      # 36 CNY
+    rate=7.2,         # 固定汇率
+    notify_url="https://your-domain.com/notify"
+)
+# 结果：actual_amount = 5.0 USDT
+```
+
 ### Q: 如何获取 API Token？
 
 API Token 在 BEpusdt 的配置文件 `conf.toml` 中：
@@ -85,6 +124,71 @@ rate="+0.3"
 ```
 
 ## 错误处理
+
+### Q: 遇到 503 Service Unavailable 错误怎么办？
+
+**问题现象：**
+```
+rpc error: code = Unavailable desc = unexpected HTTP status code received from server: 503 (Service Unavailable)
+```
+
+**原因分析：**
+- BEpusdt 服务器暂时不可用（维护、重启、负载过高）
+- 网络临时故障
+- 区块链节点连接问题
+
+**解决方案：**
+
+1. **使用自动重试（推荐）** - SDK v0.2.2+ 已内置
+
+```python
+# 初始化时配置重试参数
+client = BEpusdtClient(
+    api_url="https://your-server.com",
+    api_token="your-api-token",
+    max_retries=3,      # 最多重试 3 次
+    retry_delay=1.0     # 初始延迟 1 秒（指数退避）
+)
+
+# SDK 会自动重试以下错误：
+# - 网络连接失败 (NetworkError)
+# - 请求超时 (TimeoutError)
+# - 服务器错误 5xx (ServerError)
+```
+
+2. **手动重试**
+
+```python
+import time
+from bepusdt.exceptions import ServerError, NetworkError, TimeoutError
+
+max_attempts = 3
+for attempt in range(max_attempts):
+    try:
+        order = client.create_order(...)
+        break  # 成功则退出
+    except (ServerError, NetworkError, TimeoutError) as e:
+        if attempt < max_attempts - 1:
+            wait_time = 2 ** attempt  # 指数退避：1s, 2s, 4s
+            print(f"请求失败，{wait_time}秒后重试...")
+            time.sleep(wait_time)
+        else:
+            raise  # 最后一次失败则抛出异常
+```
+
+3. **检查服务器状态**
+
+```bash
+# 查看 BEpusdt 日志
+docker logs bepusdt
+
+# 检查服务是否运行
+curl https://your-server.com/pay/check-status/test
+```
+
+4. **联系管理员**
+
+如果问题持续，可能是服务器配置问题，建议联系 BEpusdt 管理员。
 
 ### Q: 创建订单失败，返回 400
 

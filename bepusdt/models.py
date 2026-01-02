@@ -1,8 +1,13 @@
 """数据模型"""
 
+import io
+import base64
 from enum import IntEnum
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from dataclasses import dataclass
+
+if TYPE_CHECKING:
+    from PIL import Image
 
 
 class OrderStatus(IntEnum):
@@ -98,3 +103,78 @@ class Order:
             status=OrderStatus(data["status"]) if "status" in data else None,
             block_transaction_id=data.get("block_transaction_id")
         )
+
+    def generate_qrcode(self, box_size: int = 10, border: int = 4) -> "Image.Image":
+        """生成收款地址二维码图片
+        
+        Args:
+            box_size: 每个方块的像素大小，默认 10
+            border: 边框宽度（方块数），默认 4
+        
+        Returns:
+            PIL.Image.Image: 二维码图片对象
+        
+        Raises:
+            ImportError: 未安装 qrcode 或 pillow 库
+        
+        Example:
+            >>> order = client.create_order(...)
+            >>> qr_image = order.generate_qrcode()
+            >>> qr_image.save("payment_qr.png")
+        """
+        try:
+            import qrcode
+        except ImportError:
+            raise ImportError(
+                "生成二维码需要安装 qrcode 库: pip install qrcode[pil]"
+            )
+        
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=box_size,
+            border=border,
+        )
+        qr.add_data(self.token)
+        qr.make(fit=True)
+        
+        return qr.make_image(fill_color="black", back_color="white")
+
+    def get_qrcode_base64(self, box_size: int = 10, border: int = 4, format: str = "PNG") -> str:
+        """生成收款地址二维码的 Base64 编码
+        
+        Args:
+            box_size: 每个方块的像素大小，默认 10
+            border: 边框宽度（方块数），默认 4
+            format: 图片格式，默认 PNG
+        
+        Returns:
+            str: Base64 编码的图片数据（不含 data:image 前缀）
+        
+        Example:
+            >>> order = client.create_order(...)
+            >>> qr_base64 = order.get_qrcode_base64()
+            >>> # 在 HTML 中使用: <img src="data:image/png;base64,{qr_base64}">
+        """
+        img = self.generate_qrcode(box_size=box_size, border=border)
+        buffer = io.BytesIO()
+        img.save(buffer, format=format)
+        return base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    def get_qrcode_data_uri(self, box_size: int = 10, border: int = 4) -> str:
+        """生成收款地址二维码的 Data URI（可直接用于 HTML img src）
+        
+        Args:
+            box_size: 每个方块的像素大小，默认 10
+            border: 边框宽度（方块数），默认 4
+        
+        Returns:
+            str: Data URI 格式的图片数据
+        
+        Example:
+            >>> order = client.create_order(...)
+            >>> data_uri = order.get_qrcode_data_uri()
+            >>> # 直接用于 HTML: <img src="{data_uri}">
+        """
+        qr_base64 = self.get_qrcode_base64(box_size=box_size, border=border)
+        return f"data:image/png;base64,{qr_base64}"

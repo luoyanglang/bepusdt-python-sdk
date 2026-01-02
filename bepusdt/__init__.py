@@ -7,7 +7,7 @@ from .exceptions import (
 )
 from .models import Order, OrderStatus, TradeType
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 __author__ = "luoyanglang"
 __url__ = "https://github.com/luoyanglang/bepusdt-python-sdk"
 __all__ = [

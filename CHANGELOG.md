@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-01-01
+
+### Added
+- 新增二维码生成功能，支持生成收款地址二维码
+- `Order.generate_qrcode()` - 生成二维码 PIL Image 对象
+- `Order.get_qrcode_base64()` - 生成 Base64 编码的二维码
+- `Order.get_qrcode_data_uri()` - 生成可直接用于 HTML img src 的 Data URI
+- 新增可选依赖 `qrcode`：`pip install bepusdt[qrcode]`
+
 ## [0.2.2] - 2025-12-27
 
 ### Added
