@@ -8,7 +8,7 @@
 <a href="https://pypi.org/project/bepusdt/"><img src="https://img.shields.io/pypi/v/bepusdt.svg" alt="PyPI version"></a>
 <a href="https://pypi.org/project/bepusdt/"><img src="https://img.shields.io/pypi/pyversions/bepusdt.svg" alt="Python Support"></a>
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
-<a href="https://github.com/v03413/bepusdt"><img src="https://img.shields.io/badge/BEpusdt-v1.22+-blue" alt="BEpusdt"></a>
+<a href="https://github.com/v03413/bepusdt"><img src="https://img.shields.io/badge/BEpusdt-v1.23+-blue" alt="BEpusdt"></a>
 </p>
 
 ## 🪧 介绍
@@ -20,7 +20,7 @@ BEpusdt 支付网关的 Python SDK，让 Python 开发者能够快速集成 USDT
 - 🎯 **简单易用** - 几行代码即可集成
 - 🔐 **自动签名** - 内置签名生成和验证
 - 🌐 **多链支持** - 支持 10+ 区块链网络
-- 💰 **多币种** - USDT、USDC、TRX
+- 💰 **多币种** - USDT、USDC、TRX、ETH、BNB
 - 🔄 **自动重试** - 网络错误自动重试，提升成功率
 - 📱 **二维码生成** - 一键生成收款地址二维码
 - 📝 **类型提示** - 完整的 IDE 智能提示
@@ -38,7 +38,7 @@ BEpusdt 支付网关的 Python SDK，让 Python 开发者能够快速集成 USDT
 ⚡ 其他网络：Arbitrum · Solana · Aptos · X-Layer · Base
 
 ### 其他
-💎 TRX (Tron)
+💎 TRX (Tron) · ETH (Ethereum) · BNB (BSC)
 
 ## 📦 安装
 

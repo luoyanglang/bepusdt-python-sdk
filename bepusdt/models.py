@@ -53,8 +53,10 @@ class TradeType:
     USDC_ARBITRUM = "usdc.arbitrum"  # Arbitrum-One 网络
     USDC_BASE = "usdc.base"        # Base 网络
     
-    # 其他
-    TRON_TRX = "tron.trx"          # TRX
+    # 原生代币
+    TRON_TRX = "tron.trx"          # TRX (Tron 网络)
+    ETH_ERC20 = "ethereum.eth"     # ETH (Ethereum 网络)
+    BNB_BEP20 = "bsc.bnb"          # BNB (BSC 网络)
 
 
 @dataclass
@@ -64,11 +66,12 @@ class Order:
     Attributes:
         trade_id: BEpusdt 交易ID
         order_id: 商户订单号
-        amount: 请求金额（CNY）
-        actual_amount: 实际支付金额（USDT/TRX/USDC）
+        amount: 请求金额（法币）
+        actual_amount: 实际支付金额（加密货币）
         token: 收款地址
         expiration_time: 过期时间（秒）
         payment_url: 支付链接
+        fiat: 法币类型（可选，如 CNY/USD/EUR）
         status: 订单状态（可选）
         block_transaction_id: 区块链交易ID（可选）
     """
@@ -79,6 +82,7 @@ class Order:
     token: str
     expiration_time: int
     payment_url: str
+    fiat: Optional[str] = None
     status: Optional[OrderStatus] = None
     block_transaction_id: Optional[str] = None
     
@@ -100,6 +104,7 @@ class Order:
             token=data["token"],
             expiration_time=int(data["expiration_time"]),
             payment_url=data["payment_url"],
+            fiat=data.get("fiat"),
             status=OrderStatus(data["status"]) if "status" in data else None,
             block_transaction_id=data.get("block_transaction_id")
         )

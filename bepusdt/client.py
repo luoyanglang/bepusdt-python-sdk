@@ -71,7 +71,9 @@ class BEpusdtClient:
         address: Optional[str] = None,
         trade_type: str = TradeType.USDT_TRC20,
         timeout: Optional[int] = None,
-        rate: Optional[float] = None
+        rate: Optional[float] = None,
+        fiat: Optional[str] = None,
+        name: Optional[str] = None
     ) -> Order:
         """创建支付订单
         
@@ -79,7 +81,7 @@ class BEpusdtClient:
         
         Args:
             order_id: 商户订单号，必须唯一
-            amount: 支付金额（CNY）
+            amount: 支付金额（法币）
             notify_url: 支付回调地址（必须 HTTPS）
             redirect_url: 支付成功跳转地址（可选）
             address: 指定收款地址（可选）
@@ -89,12 +91,14 @@ class BEpusdtClient:
                         usdt.aptos, usdt.solana, usdt.xlayer, usdt.arbitrum, usdt.plasma
                 - USDC: usdc.trc20, usdc.erc20, usdc.polygon, usdc.bep20,
                         usdc.aptos, usdc.solana, usdc.xlayer, usdc.arbitrum, usdc.base
-                - 其他: tron.trx
+                - 原生代币: tron.trx, ethereum.eth, bsc.bnb
             timeout: 订单超时时间（秒，最低60，可选）
             rate: 自定义汇率（可选）
                 - 固定汇率：7.4 表示固定 7.4
                 - 浮动汇率：~1.02 表示最新汇率上浮 2%，~0.97 表示下浮 3%
                 - 增减汇率：+0.3 表示最新加 0.3，-0.2 表示最新减 0.2
+            fiat: 法币类型（可选），支持 CNY/USD/EUR/GBP/JPY，默认 CNY
+            name: 商品名称（可选）
         
         Returns:
             Order: 订单对象
@@ -111,20 +115,22 @@ class BEpusdtClient:
             ...     trade_type=TradeType.USDT_TRC20
             ... )
             
-            >>> # TRX 支付
+            >>> # ETH 支付
             >>> order = client.create_order(
             ...     order_id="ORDER_002",
-            ...     amount=1.0,
+            ...     amount=100.0,
             ...     notify_url="https://your-domain.com/notify",
-            ...     trade_type=TradeType.TRON_TRX
+            ...     trade_type=TradeType.ETH_ERC20,
+            ...     fiat="USD"
             ... )
             
-            >>> # 自定义汇率（上浮2%）
+            >>> # BNB 支付（带商品名称）
             >>> order = client.create_order(
             ...     order_id="ORDER_003",
-            ...     amount=10.0,
+            ...     amount=50.0,
             ...     notify_url="https://your-domain.com/notify",
-            ...     rate="~1.02"
+            ...     trade_type=TradeType.BNB_BEP20,
+            ...     name="VIP会员"
             ... )
         """
         params = {
@@ -146,6 +152,10 @@ class BEpusdtClient:
             params["timeout"] = timeout
         if rate:
             params["rate"] = rate
+        if fiat:
+            params["fiat"] = fiat
+        if name:
+            params["name"] = name
         
         params["signature"] = generate_signature(params, self.api_token)
         

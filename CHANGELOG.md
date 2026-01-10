@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-01-11
+
+### Added
+- 同步支持 BEpusdt v1.23.0
+- 新增 ETH 原生代币支持 (`TradeType.ETH_ERC20`)
+- 新增 BNB 原生代币支持 (`TradeType.BNB_BEP20`)
+- `create_order()` 新增 `fiat` 参数，支持多法币类型 (CNY/USD/EUR/GBP/JPY)
+- `create_order()` 新增 `name` 参数，支持设置商品名称
+- `Order` 模型新增 `fiat` 字段
+
 ## [0.2.3] - 2026-01-01
 
 ### Added

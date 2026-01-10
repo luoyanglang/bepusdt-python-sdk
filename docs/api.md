@@ -55,19 +55,23 @@ order = client.create_order(
     trade_type=TradeType.USDT_TRC20,  # 可选
     address="TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",  # 可选
     timeout=1200,  # 可选
-    rate=7.4  # 可选
+    rate=7.4,  # 可选
+    fiat="CNY",  # 可选，法币类型
+    name="商品名称"  # 可选
 )
 ```
 
 **参数：**
 - `order_id` (str): 商户订单号，必须唯一
-- `amount` (float): 支付金额（**人民币 CNY**）⭐
+- `amount` (float): 支付金额（法币）⭐
 - `notify_url` (str): 支付回调地址（必须 HTTPS）
 - `redirect_url` (str, 可选): 支付成功跳转地址
 - `trade_type` (str, 可选): 支付类型，默认 `TradeType.USDT_TRC20`
 - `address` (str, 可选): 指定收款地址
 - `timeout` (int, 可选): 订单超时时间（秒），最低 60
 - `rate` (float | str, 可选): 自定义汇率
+- `fiat` (str, 可选): 法币类型，支持 CNY/USD/EUR/GBP/JPY，默认 CNY
+- `name` (str, 可选): 商品名称
 
 **返回：** `Order` 对象
 
@@ -107,6 +111,8 @@ TradeType.USDC_BASE       # Base
 
 # 其他
 TradeType.TRON_TRX        # TRX
+TradeType.ETH_ERC20       # ETH (Ethereum)
+TradeType.BNB_BEP20       # BNB (BSC)
 ```
 
 ### 自定义汇率格式
@@ -200,11 +206,12 @@ is_valid = client.verify_callback(callback_data)
 **属性：**
 - `trade_id` (str): BEpusdt 交易ID
 - `order_id` (str): 商户订单号
-- `amount` (float): 请求金额（**人民币 CNY**）
-- `actual_amount` (float): 实际支付金额（**加密货币 USDT/TRX/USDC**）⭐
+- `amount` (float): 请求金额（法币）
+- `actual_amount` (float): 实际支付金额（**加密货币 USDT/TRX/USDC/ETH/BNB**）⭐
 - `token` (str): 收款地址
 - `expiration_time` (int): 过期时间（秒）
 - `payment_url` (str): 支付链接
+- `fiat` (str, 可选): 法币类型（CNY/USD/EUR/GBP/JPY）
 - `status` (OrderStatus, 可选): 订单状态
 - `block_transaction_id` (str, 可选): 区块链交易ID
 
