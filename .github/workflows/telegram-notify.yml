@@ -1,13 +1,32 @@
 name: Telegram Release Notification
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   notify:
+    name: Notify Telegram
     runs-on: ubuntu-latest
+
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version and changelog
+        id: info
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          # 提取当前版本的 changelog 内容，去除空行，最多 30 行
+          BODY=$(awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{if(flag) exit} flag" CHANGELOG.md \
+            | sed '/^[[:space:]]*$/d' \
+            | head -30)
+          echo "BODY<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Send to Telegram Group
         uses: appleboy/telegram-action@master
         with:
@@ -15,22 +34,20 @@ jobs:
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           format: markdown
           message: |
-            🎉 *BEpusdt Python SDK 新版本发布！*
-            
-            📦 版本: `${{ github.event.release.tag_name }}`
-            
+            🎉 *BEpusdt Python SDK ${{ github.ref_name }} 发布！*
+
             📝 更新内容:
-            ${{ github.event.release.body }}
-            
-            🔗 [查看详情](${{ github.event.release.html_url }})
-            
+            ${{ steps.info.outputs.BODY }}
+
+            🔗 [查看详情](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }})
+
             💻 安装命令:
-            ```bash
+            ```
             pip install --upgrade bepusdt
             ```
-            
-            📚 文档: https://github.com/luoyanglang/bepusdt-python-sdk
-      
+
+            📚 https://github.com/${{ github.repository }}
+
       - name: Send to Telegram Channel
         uses: appleboy/telegram-action@master
         with:
@@ -38,18 +55,16 @@ jobs:
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           format: markdown
           message: |
-            🎉 *BEpusdt Python SDK 新版本发布！*
-            
-            📦 版本: `${{ github.event.release.tag_name }}`
-            
+            🎉 *BEpusdt Python SDK ${{ github.ref_name }} 发布！*
+
             📝 更新内容:
-            ${{ github.event.release.body }}
-            
-            🔗 [查看详情](${{ github.event.release.html_url }})
-            
+            ${{ steps.info.outputs.BODY }}
+
+            🔗 [查看详情](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }})
+
             💻 安装命令:
-            ```bash
+            ```
             pip install --upgrade bepusdt
             ```
-            
-            📚 文档: https://github.com/luoyanglang/bepusdt-python-sdk
+
+            📚 https://github.com/${{ github.repository }}

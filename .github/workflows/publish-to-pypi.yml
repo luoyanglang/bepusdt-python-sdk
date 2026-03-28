@@ -1,34 +1,58 @@
 name: Publish to PyPI
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   publish:
+    name: Build & Publish
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      contents: read
-    
+      contents: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          BODY=$(awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{if(flag) exit} flag" CHANGELOG.md)
+          echo "BODY<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      
-      - name: Install dependencies
+
+      - name: Install build tools
         run: |
           python -m pip install --upgrade pip
           pip install build twine
-      
+
       - name: Build package
         run: python -m build
-      
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.BODY }}
+          draft: false
+          prerelease: false
