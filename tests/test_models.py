@@ -45,10 +45,30 @@ class TestOrderStatus:
     """订单状态测试"""
 
     def test_order_status_values(self):
-        """测试订单状态值"""
+        """测试原有三种订单状态值"""
         assert OrderStatus.WAITING == 1
         assert OrderStatus.SUCCESS == 2
         assert OrderStatus.TIMEOUT == 3
+
+    def test_order_status_new_values(self):
+        """测试新增三种订单状态值（与 Go 网关 v1.23+ 对齐）"""
+        assert OrderStatus.CANCELED == 4
+        assert OrderStatus.CONFIRMING == 5
+        assert OrderStatus.FAILED == 6
+
+    def test_order_status_from_int(self):
+        """测试从整数构造枚举（回调 status 字段解析场景）"""
+        assert OrderStatus(1) == OrderStatus.WAITING
+        assert OrderStatus(2) == OrderStatus.SUCCESS
+        assert OrderStatus(3) == OrderStatus.TIMEOUT
+        assert OrderStatus(4) == OrderStatus.CANCELED
+        assert OrderStatus(5) == OrderStatus.CONFIRMING
+        assert OrderStatus(6) == OrderStatus.FAILED
+
+    def test_order_status_invalid_raises(self):
+        """测试非法状态值抛出 ValueError"""
+        with pytest.raises(ValueError):
+            OrderStatus(99)
 
 
 class TestTradeType:

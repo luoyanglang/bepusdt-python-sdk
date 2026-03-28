@@ -1,6 +1,7 @@
 """签名算法"""
 
 import hashlib
+import hmac
 from typing import Dict, Any
 
 
@@ -50,4 +51,5 @@ def verify_signature(params: Dict[str, Any], api_token: str, received_signature:
         >>> is_valid = verify_signature(params, "your-token", "xxx")
     """
     expected_signature = generate_signature(params, api_token)
-    return expected_signature == received_signature
+    # 使用常数时间比较，防止时序攻击（timing attack）
+    return hmac.compare_digest(expected_signature, received_signature)

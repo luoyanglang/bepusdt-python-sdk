@@ -35,6 +35,7 @@ class TestBEpusdtClient:
         """测试创建订单成功"""
         # 模拟 API 响应
         mock_response = Mock()
+        mock_response.status_code = 200
         mock_response.json.return_value = {
             "status_code": 200,
             "message": "success",
@@ -65,8 +66,9 @@ class TestBEpusdtClient:
     @patch('bepusdt.client.requests.Session.post')
     def test_create_order_fail(self, mock_post):
         """测试创建订单失败"""
-        # 模拟 API 错误响应
+        # 模拟 API 错误响应（HTTP 200，业务层 status_code=400）
         mock_response = Mock()
+        mock_response.status_code = 200
         mock_response.json.return_value = {
             "status_code": 400,
             "message": "参数错误"
@@ -88,6 +90,7 @@ class TestBEpusdtClient:
         """测试取消订单成功"""
         # 模拟 API 响应
         mock_response = Mock()
+        mock_response.status_code = 200
         mock_response.json.return_value = {
             "status_code": 200,
             "message": "success",
@@ -106,6 +109,7 @@ class TestBEpusdtClient:
         """测试查询订单成功"""
         # 模拟 API 响应
         mock_response = Mock()
+        mock_response.status_code = 200
         mock_response.json.return_value = {
             "trade_id": "test_trade_123",
             "trade_hash": "0x123abc",
@@ -127,6 +131,7 @@ class TestBEpusdtClient:
         """测试查询不存在的订单"""
         # 模拟 API 响应（订单不存在）
         mock_response = Mock()
+        mock_response.status_code = 200
         mock_response.json.return_value = {}
         mock_get.return_value = mock_response
 

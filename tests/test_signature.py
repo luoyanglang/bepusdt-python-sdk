@@ -70,5 +70,27 @@ class TestSignature:
         """测试缺少签名"""
         params = {"order_id": "TEST_001", "amount": 10}
         token = "test_token"
-        
+
         assert verify_signature(params, token, "") is False
+
+    def test_verify_signature_constant_time(self):
+        """verify_signature 使用常数时间比较，不因签名长度差异产生时序侧信道"""
+        import hmac as _hmac
+        import unittest.mock as mock
+
+        params = {"order_id": "TEST_001", "amount": 10}
+        token = "test_token"
+        valid_sig = generate_signature(params, token)
+
+        # 验证内部调用了 hmac.compare_digest 而非 == 比较
+        with mock.patch("bepusdt.signature.hmac.compare_digest", wraps=_hmac.compare_digest) as mock_cd:
+            result = verify_signature(params, token, valid_sig)
+            assert result is True
+            mock_cd.assert_called_once_with(valid_sig, valid_sig)
+
+    def test_verify_signature_wrong_token(self):
+        """测试 token 不同时签名验证失败"""
+        params = {"order_id": "TEST_001", "amount": 10}
+        sig = generate_signature(params, "correct_token")
+
+        assert verify_signature(params, "wrong_token", sig) is False
