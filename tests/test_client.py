@@ -141,6 +141,68 @@ class TestBEpusdtClient:
         
         assert "订单不存在" in str(exc_info.value)
 
+    @patch('bepusdt.client.requests.Session.post')
+    def test_create_order_with_zero_timeout(self, mock_post):
+        """测试 timeout=0 不被静默丢弃"""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "status_code": 200,
+            "message": "success",
+            "data": {
+                "trade_id": "test_trade_123",
+                "order_id": "ORDER_001",
+                "amount": "10.0",
+                "actual_amount": "1.35",
+                "token": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+                "expiration_time": 600,
+                "payment_url": "https://test.example.com/pay/xxx"
+            }
+        }
+        mock_post.return_value = mock_response
+
+        self.client.create_order(
+            order_id="ORDER_001",
+            amount=10.0,
+            notify_url="https://example.com/notify",
+            timeout=0
+        )
+
+        called_data = mock_post.call_args.kwargs["json"]
+        assert "timeout" in called_data
+        assert called_data["timeout"] == 0
+
+    @patch('bepusdt.client.requests.Session.post')
+    def test_create_order_with_zero_rate(self, mock_post):
+        """测试 rate=0 不被静默丢弃"""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "status_code": 200,
+            "message": "success",
+            "data": {
+                "trade_id": "test_trade_123",
+                "order_id": "ORDER_001",
+                "amount": "10.0",
+                "actual_amount": "1.35",
+                "token": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+                "expiration_time": 600,
+                "payment_url": "https://test.example.com/pay/xxx"
+            }
+        }
+        mock_post.return_value = mock_response
+
+        self.client.create_order(
+            order_id="ORDER_001",
+            amount=10.0,
+            notify_url="https://example.com/notify",
+            rate=0
+        )
+
+        called_data = mock_post.call_args.kwargs["json"]
+        assert "rate" in called_data
+        assert called_data["rate"] == 0
+
     def test_verify_callback_valid(self):
         """测试验证有效回调"""
         callback_data = {

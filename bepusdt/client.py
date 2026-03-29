@@ -148,9 +148,9 @@ class BEpusdtClient:
             params["redirect_url"] = notify_url
         if address:
             params["address"] = address
-        if timeout:
+        if timeout is not None:
             params["timeout"] = timeout
-        if rate:
+        if rate is not None:
             params["rate"] = rate
         if fiat:
             params["fiat"] = fiat
