@@ -244,3 +244,12 @@ class TestBEpusdtClient:
 
         # 验证签名
         assert self.client.verify_callback(callback_data) is False
+
+    def test_init_produces_no_stdout_output(self, capsys):
+        """测试初始化不产生 stdout 输出"""
+        BEpusdtClient(
+            api_url="https://test.example.com",
+            api_token="test_token"
+        )
+        captured = capsys.readouterr()
+        assert captured.out == "", "初始化不应产生任何 stdout 输出"

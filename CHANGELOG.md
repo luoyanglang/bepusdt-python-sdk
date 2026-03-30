@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-03-30
+
+### Fixed
+- `client.py` 移除 `print()` 调用，改用 `logger.debug()`，库代码不再写 stdout
+- 移除 `_SDK_INFO_SHOWN` 全局可变状态（线程不安全），初始化逻辑简化为直接写 debug 日志
+
+### Tests
+- 新增 `test_init_produces_no_stdout_output`：验证 `BEpusdtClient` 初始化不产生任何 stdout 输出
+
 ## [0.3.2] - 2026-03-29
 
 ### Security
@@ -93,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复 amount 参数类型导致的签名错误
 - 优化签名算法，正确处理空值
 
+[0.3.3]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.3
 [0.3.2]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.2
 [0.3.1]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.1
 [0.2.3]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.2.3

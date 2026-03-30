@@ -6,13 +6,12 @@ from typing import Optional, Dict, Any, List
 from .signature import generate_signature, verify_signature
 from .models import Order, TradeType
 from .exceptions import (
-    APIError, NetworkError, TimeoutError, ServerError, 
+    APIError, NetworkError, TimeoutError, ServerError,
     ClientError, ValidationError
 )
 from .retry import retry_on_error
 
-# 进程级别标志，确保 SDK 信息只显示一次
-_SDK_INFO_SHOWN = False
+logger = logging.getLogger(__name__)
 
 
 class BEpusdtClient:
@@ -39,28 +38,22 @@ class BEpusdtClient:
     """
     
     def __init__(
-        self, 
-        api_url: str, 
-        api_token: str, 
+        self,
+        api_url: str,
+        api_token: str,
         timeout: int = 30,
         max_retries: int = 3,
         retry_delay: float = 1.0
     ):
-        global _SDK_INFO_SHOWN
-        
         self.api_url = api_url.rstrip("/")
         self.api_token = api_token
         self.timeout = timeout
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.session = requests.Session()
-        
-        # 只在进程中显示一次 SDK 信息
-        if not _SDK_INFO_SHOWN:
-            from . import __version__, __url__
-            print(f"🎉 BEpusdt Python SDK v{__version__} 已初始化！")
-            print(f"📦 GitHub: {__url__}")
-            _SDK_INFO_SHOWN = True
+
+        from . import __version__, __url__
+        logger.debug("BEpusdt Python SDK v%s 已初始化，GitHub: %s", __version__, __url__)
     
     def create_order(
         self,
