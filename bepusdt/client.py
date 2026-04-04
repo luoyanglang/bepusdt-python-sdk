@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any, List
 from .signature import generate_signature, verify_signature
 from .models import Order, TradeType
 from .exceptions import (
-    APIError, NetworkError, TimeoutError, ServerError,
+    APIError, NetworkError, RequestTimeoutError, ServerError,
     ClientError, ValidationError
 )
 from .retry import retry_on_error
@@ -303,7 +303,7 @@ class BEpusdtClient:
         
         Raises:
             NetworkError: 网络连接失败
-            TimeoutError: 请求超时
+            RequestTimeoutError: 请求超时
             ServerError: 服务器错误 5xx
             ClientError: 客户端错误 4xx
             APIError: 其他 API 错误
@@ -311,7 +311,7 @@ class BEpusdtClient:
         @retry_on_error(
             max_retries=self.max_retries,
             delay=self.retry_delay,
-            exceptions=(NetworkError, TimeoutError, ServerError)
+            exceptions=(NetworkError, RequestTimeoutError, ServerError)
         )
         def _do_request():
             try:
@@ -337,7 +337,7 @@ class BEpusdtClient:
                 return resp.json()
                 
             except requests.exceptions.Timeout as e:
-                raise TimeoutError(f"请求超时: {str(e)}")
+                raise RequestTimeoutError(f"请求超时: {str(e)}")
             except requests.exceptions.ConnectionError as e:
                 raise NetworkError(f"网络连接失败: {str(e)}")
             except requests.exceptions.RequestException as e:
@@ -358,7 +358,7 @@ class BEpusdtClient:
         
         Raises:
             NetworkError: 网络连接失败
-            TimeoutError: 请求超时
+            RequestTimeoutError: 请求超时
             ServerError: 服务器错误 5xx
             ClientError: 客户端错误 4xx
             APIError: 其他 API 错误
@@ -366,7 +366,7 @@ class BEpusdtClient:
         @retry_on_error(
             max_retries=self.max_retries,
             delay=self.retry_delay,
-            exceptions=(NetworkError, TimeoutError, ServerError)
+            exceptions=(NetworkError, RequestTimeoutError, ServerError)
         )
         def _do_request():
             try:
@@ -392,7 +392,7 @@ class BEpusdtClient:
                 return resp.json()
                 
             except requests.exceptions.Timeout as e:
-                raise TimeoutError(f"请求超时: {str(e)}")
+                raise RequestTimeoutError(f"请求超时: {str(e)}")
             except requests.exceptions.ConnectionError as e:
                 raise NetworkError(f"网络连接失败: {str(e)}")
             except requests.exceptions.RequestException as e:

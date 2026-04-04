@@ -4,7 +4,7 @@ import time
 import logging
 from functools import wraps
 from typing import Callable, Tuple, Type
-from .exceptions import NetworkError, TimeoutError, ServerError
+from .exceptions import NetworkError, RequestTimeoutError, ServerError
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ def retry_on_error(
     max_retries: int = 3,
     delay: float = 1.0,
     backoff: float = 2.0,
-    exceptions: Tuple[Type[Exception], ...] = (NetworkError, TimeoutError, ServerError)
+    exceptions: Tuple[Type[Exception], ...] = (NetworkError, RequestTimeoutError, ServerError)
 ):
     """重试装饰器
     

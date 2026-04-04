@@ -253,3 +253,36 @@ class TestBEpusdtClient:
         )
         captured = capsys.readouterr()
         assert captured.out == "", "初始化不应产生任何 stdout 输出"
+
+
+class TestRequestTimeoutErrorRename:
+    """测试 RequestTimeoutError 重命名及向后兼容别名"""
+
+    def test_request_timeout_error_exported(self):
+        """RequestTimeoutError 应可从顶层包导入"""
+        from bepusdt import RequestTimeoutError
+        from bepusdt.exceptions import RequestTimeoutError as ExcRequestTimeoutError
+        assert RequestTimeoutError is ExcRequestTimeoutError
+
+    def test_timeout_error_alias_is_request_timeout_error(self):
+        """TimeoutError 别名应指向 RequestTimeoutError（向后兼容）"""
+        from bepusdt import TimeoutError as SDKTimeoutError, RequestTimeoutError
+        assert SDKTimeoutError is RequestTimeoutError
+
+    def test_timeout_error_alias_does_not_shadow_builtin(self):
+        """bepusdt.exceptions 中不应再有遮盖内置 TimeoutError 的类"""
+        import builtins
+        import bepusdt.exceptions as exc
+        # exceptions 模块不再直接定义 TimeoutError
+        assert not hasattr(exc, "TimeoutError") or exc.TimeoutError is not builtins.TimeoutError
+
+    def test_request_timeout_error_is_bepusdt_error(self):
+        """RequestTimeoutError 应继承自 BEpusdtError"""
+        from bepusdt import RequestTimeoutError, BEpusdtError
+        assert issubclass(RequestTimeoutError, BEpusdtError)
+
+    def test_request_timeout_error_catchable_as_bepusdt_error(self):
+        """抛出 RequestTimeoutError 可被 BEpusdtError 捕获"""
+        from bepusdt import RequestTimeoutError, BEpusdtError
+        with pytest.raises(BEpusdtError):
+            raise RequestTimeoutError("超时")

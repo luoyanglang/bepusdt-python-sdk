@@ -31,7 +31,7 @@ class NetworkError(BEpusdtError):
     pass
 
 
-class TimeoutError(BEpusdtError):
+class RequestTimeoutError(BEpusdtError):
     """请求超时错误（可重试）"""
     pass
 
