@@ -286,3 +286,43 @@ class TestRequestTimeoutErrorRename:
         from bepusdt import RequestTimeoutError, BEpusdtError
         with pytest.raises(BEpusdtError):
             raise RequestTimeoutError("超时")
+
+    def test_api_error_optional_params_default_to_none(self):
+        """APIError 的 status_code 和 response 默认值应为 None"""
+        from bepusdt.exceptions import APIError
+        err = APIError("错误消息")
+        assert err.status_code is None
+        assert err.response is None
+
+    def test_api_error_accepts_none_explicitly(self):
+        """APIError 应显式接受 None 作为 status_code 和 response"""
+        from bepusdt.exceptions import APIError
+        err = APIError("错误消息", status_code=None, response=None)
+        assert err.status_code is None
+        assert err.response is None
+
+    def test_server_error_optional_status_code_default_to_none(self):
+        """ServerError 的 status_code 默认值应为 None"""
+        from bepusdt.exceptions import ServerError
+        err = ServerError("服务器错误")
+        assert err.status_code is None
+
+    def test_client_error_optional_status_code_default_to_none(self):
+        """ClientError 的 status_code 默认值应为 None"""
+        from bepusdt.exceptions import ClientError
+        err = ClientError("客户端错误")
+        assert err.status_code is None
+
+    def test_exceptions_py_has_no_mypy_errors(self):
+        """exceptions.py 中的类型注解应通过 mypy 检查（忽略其他文件的存量错误）"""
+        import subprocess
+        result = subprocess.run(
+            ["python", "-m", "mypy", "bepusdt/exceptions.py", "--ignore-missing-imports"],
+            capture_output=True, text=True
+        )
+        # 只检查 exceptions.py 自身的错误行（其他文件的存量错误不在本次范围内）
+        exceptions_errors = [
+            line for line in result.stdout.splitlines()
+            if "exceptions.py:" in line and ": error:" in line
+        ]
+        assert exceptions_errors == [], f"exceptions.py 存在 mypy 错误：\n" + "\n".join(exceptions_errors)

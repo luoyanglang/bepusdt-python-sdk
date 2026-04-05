@@ -1,5 +1,7 @@
 """异常定义"""
 
+from typing import Optional
+
 
 class BEpusdtError(Exception):
     """BEpusdt SDK 基础异常"""
@@ -20,7 +22,7 @@ class APIError(BEpusdtError):
         response: 完整响应数据（可选）
     """
     
-    def __init__(self, message: str, status_code: int = None, response: dict = None):
+    def __init__(self, message: str, status_code: Optional[int] = None, response: Optional[dict] = None):
         super().__init__(message)
         self.status_code = status_code
         self.response = response
@@ -39,7 +41,7 @@ class RequestTimeoutError(BEpusdtError):
 class ServerError(BEpusdtError):
     """服务器错误 5xx（可重试）"""
     
-    def __init__(self, message: str, status_code: int = None):
+    def __init__(self, message: str, status_code: Optional[int] = None):
         super().__init__(message)
         self.status_code = status_code
 
@@ -47,7 +49,7 @@ class ServerError(BEpusdtError):
 class ClientError(BEpusdtError):
     """客户端错误 4xx（不可重试）"""
     
-    def __init__(self, message: str, status_code: int = None):
+    def __init__(self, message: str, status_code: Optional[int] = None):
         super().__init__(message)
         self.status_code = status_code
 
