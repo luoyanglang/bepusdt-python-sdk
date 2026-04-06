@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2026-04-06
+
+### Tests
+- 新建 `tests/test_retry.py`，补全 `retry_on_error` 装饰器的完整测试覆盖
+- 测试场景：首次成功不触发 sleep、网络错误后重试成功、超出最大重试次数后抛异常、指数退避延迟验证（mock `time.sleep`）、非重试异常立即透传、`max_retries=0` 只调用一次
+
 ## [0.3.3] - 2026-03-30
 
 ### Fixed
@@ -102,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复 amount 参数类型导致的签名错误
 - 优化签名算法，正确处理空值
 
+[0.3.4]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.4
 [0.3.3]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.3
 [0.3.2]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.2
 [0.3.1]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.1
