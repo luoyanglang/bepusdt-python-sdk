@@ -1,8 +1,10 @@
 """客户端测试"""
 
 import pytest
+import requests
 from unittest.mock import Mock, patch
 from bepusdt import BEpusdtClient, OrderStatus, TradeType, APIError
+from bepusdt.exceptions import ServerError, ClientError, NetworkError, RequestTimeoutError
 
 
 class TestBEpusdtClient:
@@ -326,3 +328,125 @@ class TestRequestTimeoutErrorRename:
             if "exceptions.py:" in line and ": error:" in line
         ]
         assert exceptions_errors == [], f"exceptions.py 存在 mypy 错误：\n" + "\n".join(exceptions_errors)
+
+
+class TestHTTPExceptionPaths:
+    """测试 _post/_get 的 HTTP 异常转换路径"""
+
+    def setup_method(self):
+        """使用 max_retries=0 避免重试干扰"""
+        self.client = BEpusdtClient(
+            api_url="https://test.example.com",
+            api_token="test_token",
+            max_retries=0,
+        )
+
+    def _mock_response(self, status_code: int, json_data=None, raise_json=False):
+        mock_resp = Mock()
+        mock_resp.status_code = status_code
+        if raise_json:
+            mock_resp.json.side_effect = ValueError("解析失败")
+        else:
+            mock_resp.json.return_value = json_data or {}
+        mock_resp.raise_for_status = Mock()
+        return mock_resp
+
+    # --- POST 路径 ---
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_post_http_5xx_raises_server_error(self, mock_post):
+        """HTTP 5xx 响应应抛出 ServerError"""
+        mock_post.return_value = self._mock_response(500)
+        with pytest.raises(ServerError) as exc_info:
+            self.client.create_order(
+                order_id="ORDER_001",
+                amount=10.0,
+                notify_url="https://example.com/notify",
+            )
+        assert exc_info.value.status_code == 500
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_post_http_4xx_raises_client_error(self, mock_post):
+        """HTTP 4xx 响应应抛出 ClientError"""
+        mock_post.return_value = self._mock_response(403)
+        with pytest.raises(ClientError) as exc_info:
+            self.client.create_order(
+                order_id="ORDER_001",
+                amount=10.0,
+                notify_url="https://example.com/notify",
+            )
+        assert exc_info.value.status_code == 403
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_post_requests_timeout_raises_request_timeout_error(self, mock_post):
+        """requests.Timeout 应被转换为 RequestTimeoutError"""
+        mock_post.side_effect = requests.exceptions.Timeout("连接超时")
+        with pytest.raises(RequestTimeoutError):
+            self.client.create_order(
+                order_id="ORDER_001",
+                amount=10.0,
+                notify_url="https://example.com/notify",
+            )
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_post_requests_connection_error_raises_network_error(self, mock_post):
+        """requests.ConnectionError 应被转换为 NetworkError"""
+        mock_post.side_effect = requests.exceptions.ConnectionError("连接失败")
+        with pytest.raises(NetworkError):
+            self.client.create_order(
+                order_id="ORDER_001",
+                amount=10.0,
+                notify_url="https://example.com/notify",
+            )
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_post_json_parse_failure_raises_api_error(self, mock_post):
+        """JSON 解析失败应被转换为 APIError"""
+        mock_post.return_value = self._mock_response(200, raise_json=True)
+        with pytest.raises(APIError) as exc_info:
+            self.client.create_order(
+                order_id="ORDER_001",
+                amount=10.0,
+                notify_url="https://example.com/notify",
+            )
+        assert "解析失败" in str(exc_info.value)
+
+    # --- GET 路径 ---
+
+    @patch("bepusdt.client.requests.Session.get")
+    def test_get_http_5xx_raises_server_error(self, mock_get):
+        """GET HTTP 5xx 响应应抛出 ServerError"""
+        mock_get.return_value = self._mock_response(503)
+        with pytest.raises(ServerError) as exc_info:
+            self.client.query_order(trade_id="test_trade_123")
+        assert exc_info.value.status_code == 503
+
+    @patch("bepusdt.client.requests.Session.get")
+    def test_get_http_4xx_raises_client_error(self, mock_get):
+        """GET HTTP 4xx 响应应抛出 ClientError"""
+        mock_get.return_value = self._mock_response(404)
+        with pytest.raises(ClientError) as exc_info:
+            self.client.query_order(trade_id="test_trade_123")
+        assert exc_info.value.status_code == 404
+
+    @patch("bepusdt.client.requests.Session.get")
+    def test_get_requests_timeout_raises_request_timeout_error(self, mock_get):
+        """GET requests.Timeout 应被转换为 RequestTimeoutError"""
+        mock_get.side_effect = requests.exceptions.Timeout("超时")
+        with pytest.raises(RequestTimeoutError):
+            self.client.query_order(trade_id="test_trade_123")
+
+    @patch("bepusdt.client.requests.Session.get")
+    def test_get_requests_connection_error_raises_network_error(self, mock_get):
+        """GET requests.ConnectionError 应被转换为 NetworkError"""
+        mock_get.side_effect = requests.exceptions.ConnectionError("断线")
+        with pytest.raises(NetworkError):
+            self.client.query_order(trade_id="test_trade_123")
+
+    @patch("bepusdt.client.requests.Session.get")
+    def test_get_json_parse_failure_raises_api_error(self, mock_get):
+        """GET JSON 解析失败应被转换为 APIError"""
+        mock_get.return_value = self._mock_response(200, raise_json=True)
+        with pytest.raises(APIError) as exc_info:
+            self.client.query_order(trade_id="test_trade_123")
+        assert "解析失败" in str(exc_info.value)
