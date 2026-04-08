@@ -450,3 +450,87 @@ class TestHTTPExceptionPaths:
         with pytest.raises(APIError) as exc_info:
             self.client.query_order(trade_id="test_trade_123")
         assert "解析失败" in str(exc_info.value)
+
+
+class TestCreateOrderParamDetails:
+    """测试 create_order 可选参数细节"""
+
+    def setup_method(self):
+        self.client = BEpusdtClient(
+            api_url="https://test.example.com",
+            api_token="test_token",
+            max_retries=0,
+        )
+
+    def _mock_success_response(self):
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "status_code": 200,
+            "message": "success",
+            "data": {
+                "trade_id": "test_trade_123",
+                "order_id": "ORDER_001",
+                "amount": "10.0",
+                "actual_amount": "1.35",
+                "token": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+                "expiration_time": 600,
+                "payment_url": "https://test.example.com/pay/xxx",
+            },
+        }
+        return mock_response
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_amount_integer_conversion(self, mock_post):
+        """amount=10.0 应作为整数 10 发送给 API"""
+        mock_post.return_value = self._mock_success_response()
+        self.client.create_order(
+            order_id="ORDER_001",
+            amount=10.0,
+            notify_url="https://example.com/notify",
+        )
+        called_data = mock_post.call_args.kwargs["json"]
+        assert called_data["amount"] == 10
+        assert isinstance(called_data["amount"], int)
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_redirect_url_defaults_to_notify_url(self, mock_post):
+        """未传 redirect_url 时应使用 notify_url 作为默认值"""
+        mock_post.return_value = self._mock_success_response()
+        self.client.create_order(
+            order_id="ORDER_001",
+            amount=10.0,
+            notify_url="https://example.com/notify",
+        )
+        called_data = mock_post.call_args.kwargs["json"]
+        assert called_data["redirect_url"] == "https://example.com/notify"
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_redirect_url_explicit_value_used(self, mock_post):
+        """显式传入 redirect_url 时应使用传入值而非 notify_url"""
+        mock_post.return_value = self._mock_success_response()
+        self.client.create_order(
+            order_id="ORDER_001",
+            amount=10.0,
+            notify_url="https://example.com/notify",
+            redirect_url="https://example.com/return",
+        )
+        called_data = mock_post.call_args.kwargs["json"]
+        assert called_data["redirect_url"] == "https://example.com/return"
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_optional_params_address_fiat_name(self, mock_post):
+        """address/fiat/name 可选参数应正确包含在请求体中"""
+        mock_post.return_value = self._mock_success_response()
+        self.client.create_order(
+            order_id="ORDER_001",
+            amount=10.0,
+            notify_url="https://example.com/notify",
+            address="TN9RRaXkCFtTXRso2GdTZxSxxwufzxLQPP",
+            fiat="USD",
+            name="VIP会员",
+        )
+        called_data = mock_post.call_args.kwargs["json"]
+        assert called_data["address"] == "TN9RRaXkCFtTXRso2GdTZxSxxwufzxLQPP"
+        assert called_data["fiat"] == "USD"
+        assert called_data["name"] == "VIP会员"
