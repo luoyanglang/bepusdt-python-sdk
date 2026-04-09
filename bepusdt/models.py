@@ -2,7 +2,7 @@
 
 import io
 import base64
-from enum import IntEnum
+from enum import IntEnum, Enum
 from typing import Optional, TYPE_CHECKING
 from dataclasses import dataclass
 
@@ -32,10 +32,11 @@ class OrderStatus(IntEnum):
     FAILED = 6      # 交易确认失败
 
 
-class TradeType:
-    """支付类型常量
-    
-    支持的区块链网络和代币类型
+class TradeType(str, Enum):
+    """支付类型枚举
+
+    支持的区块链网络和代币类型。
+    继承 str 使枚举成员可直接与字符串比较，向后兼容旧代码。
     """
     # USDT
     USDT_TRC20 = "usdt.trc20"      # Tron 网络
@@ -47,7 +48,7 @@ class TradeType:
     USDT_XLAYER = "usdt.xlayer"    # X-Layer 网络
     USDT_ARBITRUM = "usdt.arbitrum"  # Arbitrum-One 网络
     USDT_PLASMA = "usdt.plasma"    # Plasma 网络
-    
+
     # USDC
     USDC_TRC20 = "usdc.trc20"      # Tron 网络
     USDC_ERC20 = "usdc.erc20"      # Ethereum 网络
@@ -58,7 +59,7 @@ class TradeType:
     USDC_XLAYER = "usdc.xlayer"    # X-Layer 网络
     USDC_ARBITRUM = "usdc.arbitrum"  # Arbitrum-One 网络
     USDC_BASE = "usdc.base"        # Base 网络
-    
+
     # 原生代币
     TRON_TRX = "tron.trx"          # TRX (Tron 网络)
     ETH_ERC20 = "ethereum.eth"     # ETH (Ethereum 网络)

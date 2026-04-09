@@ -72,19 +72,68 @@ class TestOrderStatus:
 
 
 class TestTradeType:
-    """支付类型测试"""
+    """支付类型枚举测试"""
 
-    def test_trade_type_usdt(self):
-        """测试 USDT 支付类型"""
+    def test_all_21_usdt_constants(self):
+        """验证全部 9 个 USDT 常量值"""
         assert TradeType.USDT_TRC20 == "usdt.trc20"
         assert TradeType.USDT_ERC20 == "usdt.erc20"
         assert TradeType.USDT_POLYGON == "usdt.polygon"
+        assert TradeType.USDT_BEP20 == "usdt.bep20"
+        assert TradeType.USDT_APTOS == "usdt.aptos"
+        assert TradeType.USDT_SOLANA == "usdt.solana"
+        assert TradeType.USDT_XLAYER == "usdt.xlayer"
+        assert TradeType.USDT_ARBITRUM == "usdt.arbitrum"
+        assert TradeType.USDT_PLASMA == "usdt.plasma"
 
-    def test_trade_type_usdc(self):
-        """测试 USDC 支付类型"""
+    def test_all_21_usdc_constants(self):
+        """验证全部 9 个 USDC 常量值"""
         assert TradeType.USDC_TRC20 == "usdc.trc20"
         assert TradeType.USDC_ERC20 == "usdc.erc20"
+        assert TradeType.USDC_POLYGON == "usdc.polygon"
+        assert TradeType.USDC_BEP20 == "usdc.bep20"
+        assert TradeType.USDC_APTOS == "usdc.aptos"
+        assert TradeType.USDC_SOLANA == "usdc.solana"
+        assert TradeType.USDC_XLAYER == "usdc.xlayer"
+        assert TradeType.USDC_ARBITRUM == "usdc.arbitrum"
+        assert TradeType.USDC_BASE == "usdc.base"
 
-    def test_trade_type_trx(self):
-        """测试 TRX 支付类型"""
+    def test_all_21_native_token_constants(self):
+        """验证全部 3 个原生代币常量值"""
         assert TradeType.TRON_TRX == "tron.trx"
+        assert TradeType.ETH_ERC20 == "ethereum.eth"
+        assert TradeType.BNB_BEP20 == "bsc.bnb"
+
+    def test_enum_total_count(self):
+        """验证枚举成员总数为 21"""
+        assert len(list(TradeType)) == 21
+
+    def test_string_comparison(self):
+        """str Enum 可直接与字符串比较（向后兼容）"""
+        assert TradeType.USDT_TRC20 == "usdt.trc20"
+        assert TradeType.ETH_ERC20 == "ethereum.eth"
+        assert TradeType.BNB_BEP20 == "bsc.bnb"
+
+    def test_lookup_by_value(self):
+        """可通过字符串值反查枚举成员"""
+        assert TradeType("usdt.trc20") is TradeType.USDT_TRC20
+        assert TradeType("usdc.base") is TradeType.USDC_BASE
+        assert TradeType("bsc.bnb") is TradeType.BNB_BEP20
+
+    def test_invalid_value_raises(self):
+        """非法值抛出 ValueError"""
+        with pytest.raises(ValueError):
+            TradeType("invalid.chain")
+
+    def test_iterable(self):
+        """枚举可迭代，所有成员均为 str 实例"""
+        members = list(TradeType)
+        assert len(members) == 21
+        for member in members:
+            assert isinstance(member, str)
+
+    def test_is_enum_instance(self):
+        """成员是枚举实例，同时也是字符串"""
+        from enum import Enum
+        assert isinstance(TradeType.USDT_TRC20, TradeType)
+        assert isinstance(TradeType.USDT_TRC20, str)

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.5] - 2026-04-09
+
+### Changed
+- `models.py` 将 `TradeType` 从普通类改为 `class TradeType(str, Enum)`，提供类型安全、IDE 补全和运行时校验；继承 `str` 保持向后兼容，原有 `TradeType.USDT_TRC20` 写法及字符串比较无需修改
+
+### Tests
+- `tests/test_models.py` 新增 `TestTradeType` 完整覆盖：全部 21 个常量值验证、字符串比较、按值反查、非法值 `ValueError`、枚举迭代、`isinstance` 类型断言
+
 ## [0.3.4] - 2026-04-06
 
 ### Tests
