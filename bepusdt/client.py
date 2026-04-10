@@ -291,113 +291,66 @@ class BEpusdtClient:
         params = {k: v for k, v in callback_data.items() if k != "signature"}
         return verify_signature(params, self.api_token, received_signature)
     
+    def _request(self, method: str, url: str, **kwargs: Any) -> Dict[str, Any]:
+        """发送 HTTP 请求（带重试）
+
+        Args:
+            method: HTTP 方法（"post" 或 "get"）
+            url: 请求 URL
+            **kwargs: 传递给 requests.Session 的额外参数
+
+        Returns:
+            dict: 响应数据
+
+        Raises:
+            NetworkError: 网络连接失败
+            RequestTimeoutError: 请求超时
+            ServerError: 服务器错误 5xx
+            ClientError: 客户端错误 4xx
+            APIError: 其他 API 错误
+        """
+        @retry_on_error(
+            max_retries=self.max_retries,
+            delay=self.retry_delay,
+            exceptions=(NetworkError, RequestTimeoutError, ServerError)
+        )
+        def _do_request():
+            try:
+                from . import __version__, __url__
+                headers = {
+                    "User-Agent": f"bepusdt-python-sdk/{__version__} (+{__url__})"
+                }
+                resp = getattr(self.session, method)(url, headers=headers, timeout=self.timeout, **kwargs)
+
+                if resp.status_code >= 500:
+                    raise ServerError(
+                        f"服务器错误: HTTP {resp.status_code}",
+                        status_code=resp.status_code
+                    )
+                elif resp.status_code >= 400:
+                    raise ClientError(
+                        f"客户端错误: HTTP {resp.status_code}",
+                        status_code=resp.status_code
+                    )
+
+                resp.raise_for_status()
+                return resp.json()
+
+            except requests.exceptions.Timeout as e:
+                raise RequestTimeoutError(f"请求超时: {str(e)}")
+            except requests.exceptions.ConnectionError as e:
+                raise NetworkError(f"网络连接失败: {str(e)}")
+            except requests.exceptions.RequestException as e:
+                raise APIError(f"请求失败: {str(e)}")
+            except ValueError as e:
+                raise APIError(f"响应解析失败: {str(e)}")
+
+        return _do_request()
+
     def _post(self, url: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        """发送 POST 请求（带重试）
-        
-        Args:
-            url: 请求 URL
-            data: 请求数据
-        
-        Returns:
-            dict: 响应数据
-        
-        Raises:
-            NetworkError: 网络连接失败
-            RequestTimeoutError: 请求超时
-            ServerError: 服务器错误 5xx
-            ClientError: 客户端错误 4xx
-            APIError: 其他 API 错误
-        """
-        @retry_on_error(
-            max_retries=self.max_retries,
-            delay=self.retry_delay,
-            exceptions=(NetworkError, RequestTimeoutError, ServerError)
-        )
-        def _do_request():
-            try:
-                from . import __version__, __url__
-                headers = {
-                    "User-Agent": f"bepusdt-python-sdk/{__version__} (+{__url__})"
-                }
-                resp = self.session.post(url, json=data, headers=headers, timeout=self.timeout)
-                
-                # 根据状态码抛出不同异常
-                if resp.status_code >= 500:
-                    raise ServerError(
-                        f"服务器错误: HTTP {resp.status_code}",
-                        status_code=resp.status_code
-                    )
-                elif resp.status_code >= 400:
-                    raise ClientError(
-                        f"客户端错误: HTTP {resp.status_code}",
-                        status_code=resp.status_code
-                    )
-                
-                resp.raise_for_status()
-                return resp.json()
-                
-            except requests.exceptions.Timeout as e:
-                raise RequestTimeoutError(f"请求超时: {str(e)}")
-            except requests.exceptions.ConnectionError as e:
-                raise NetworkError(f"网络连接失败: {str(e)}")
-            except requests.exceptions.RequestException as e:
-                raise APIError(f"请求失败: {str(e)}")
-            except ValueError as e:
-                raise APIError(f"响应解析失败: {str(e)}")
-        
-        return _do_request()
-    
+        """发送 POST 请求（带重试）"""
+        return self._request("post", url, json=data)
+
     def _get(self, url: str) -> Dict[str, Any]:
-        """发送 GET 请求（带重试）
-        
-        Args:
-            url: 请求 URL
-        
-        Returns:
-            dict: 响应数据
-        
-        Raises:
-            NetworkError: 网络连接失败
-            RequestTimeoutError: 请求超时
-            ServerError: 服务器错误 5xx
-            ClientError: 客户端错误 4xx
-            APIError: 其他 API 错误
-        """
-        @retry_on_error(
-            max_retries=self.max_retries,
-            delay=self.retry_delay,
-            exceptions=(NetworkError, RequestTimeoutError, ServerError)
-        )
-        def _do_request():
-            try:
-                from . import __version__, __url__
-                headers = {
-                    "User-Agent": f"bepusdt-python-sdk/{__version__} (+{__url__})"
-                }
-                resp = self.session.get(url, headers=headers, timeout=self.timeout)
-                
-                # 根据状态码抛出不同异常
-                if resp.status_code >= 500:
-                    raise ServerError(
-                        f"服务器错误: HTTP {resp.status_code}",
-                        status_code=resp.status_code
-                    )
-                elif resp.status_code >= 400:
-                    raise ClientError(
-                        f"客户端错误: HTTP {resp.status_code}",
-                        status_code=resp.status_code
-                    )
-                
-                resp.raise_for_status()
-                return resp.json()
-                
-            except requests.exceptions.Timeout as e:
-                raise RequestTimeoutError(f"请求超时: {str(e)}")
-            except requests.exceptions.ConnectionError as e:
-                raise NetworkError(f"网络连接失败: {str(e)}")
-            except requests.exceptions.RequestException as e:
-                raise APIError(f"请求失败: {str(e)}")
-            except ValueError as e:
-                raise APIError(f"响应解析失败: {str(e)}")
-        
-        return _do_request()
+        """发送 GET 请求（带重试）"""
+        return self._request("get", url)
