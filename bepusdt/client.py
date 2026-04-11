@@ -2,7 +2,7 @@
 
 import logging
 import requests
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
 from .signature import generate_signature, verify_signature
 from .models import Order, TradeType
 from .exceptions import (
@@ -64,7 +64,7 @@ class BEpusdtClient:
         address: Optional[str] = None,
         trade_type: str = TradeType.USDT_TRC20,
         timeout: Optional[int] = None,
-        rate: Optional[float] = None,
+        rate: Optional[Union[float, str]] = None,
         fiat: Optional[str] = None,
         name: Optional[str] = None
     ) -> Order:
@@ -86,10 +86,10 @@ class BEpusdtClient:
                         usdc.aptos, usdc.solana, usdc.xlayer, usdc.arbitrum, usdc.base
                 - 原生代币: tron.trx, ethereum.eth, bsc.bnb
             timeout: 订单超时时间（秒，最低60，可选）
-            rate: 自定义汇率（可选）
-                - 固定汇率：7.4 表示固定 7.4
-                - 浮动汇率：~1.02 表示最新汇率上浮 2%，~0.97 表示下浮 3%
-                - 增减汇率：+0.3 表示最新加 0.3，-0.2 表示最新减 0.2
+            rate: 自定义汇率（可选），支持 float 或特殊前缀字符串
+                - 固定汇率：7.4（float）或 "7.4"（str）表示固定 7.4
+                - 浮动汇率："~1.02" 表示最新汇率上浮 2%，"~0.97" 表示下浮 3%
+                - 增减汇率："+0.3" 表示最新加 0.3，"-0.2" 表示最新减 0.2
             fiat: 法币类型（可选），支持 CNY/USD/EUR/GBP/JPY，默认 CNY
             name: 商品名称（可选）
         
