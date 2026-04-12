@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] - 2026-04-12
+
+### Tests
+- `tests/test_models.py` 新增 `TestOrderQRCode`：覆盖二维码三个方法的完整测试
+- 测试场景：未安装 `qrcode` 时抛出含 `pip install` 提示的 `ImportError`；`get_qrcode_base64` 返回合法 base64 字符串；`get_qrcode_data_uri` 返回 `data:image/png;base64,` 前缀；`generate_qrcode` 使用 `order.token` 作为二维码数据
+
 ## [0.3.5] - 2026-04-09
 
 ### Changed

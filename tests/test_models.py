@@ -1,6 +1,11 @@
 """数据模型测试"""
 
+import base64
+import sys
+from unittest.mock import MagicMock, patch
+
 import pytest
+
 from bepusdt.models import Order, OrderStatus, TradeType
 
 
@@ -137,3 +142,69 @@ class TestTradeType:
         from enum import Enum
         assert isinstance(TradeType.USDT_TRC20, TradeType)
         assert isinstance(TradeType.USDT_TRC20, str)
+
+
+def _make_order(token: str = "TQhAwH4zSsgP78CdqMNqpEDik988888888") -> Order:
+    return Order(
+        trade_id="TRD_001",
+        order_id="ORD_001",
+        amount=10.0,
+        actual_amount=1.35,
+        token=token,
+        expiration_time=600,
+        payment_url="https://pay.example.com/xxx",
+    )
+
+
+class TestOrderQRCode:
+    """订单二维码方法测试"""
+
+    def test_generate_qrcode_uses_token_as_data(self):
+        """generate_qrcode 应使用 order.token 作为二维码数据"""
+        token = "TQhAwH4zSsgP78CdqMNqpEDik988888888"
+        order = _make_order(token=token)
+
+        mock_qr = MagicMock()
+        mock_img = MagicMock()
+        mock_qr.make_image.return_value = mock_img
+        mock_qrcode = MagicMock()
+        mock_qrcode.QRCode.return_value = mock_qr
+        mock_qrcode.constants.ERROR_CORRECT_L = 1
+
+        with patch.dict(sys.modules, {"qrcode": mock_qrcode}):
+            result = order.generate_qrcode()
+
+        mock_qr.add_data.assert_called_once_with(token)
+        assert result is mock_img
+
+    def test_generate_qrcode_raises_import_error_when_qrcode_missing(self):
+        """未安装 qrcode 时应抛出含安装提示的 ImportError"""
+        order = _make_order()
+
+        with patch.dict(sys.modules, {"qrcode": None}):
+            with pytest.raises(ImportError) as exc_info:
+                order.generate_qrcode()
+
+        assert "pip install" in str(exc_info.value)
+        assert "qrcode" in str(exc_info.value)
+
+    def test_get_qrcode_base64_returns_valid_base64(self):
+        """get_qrcode_base64 应返回合法的 base64 字符串"""
+        order = _make_order()
+        result = order.get_qrcode_base64()
+
+        assert isinstance(result, str)
+        # 合法 base64 字符串可无异常解码
+        decoded = base64.b64decode(result)
+        assert len(decoded) > 0
+
+    def test_get_qrcode_data_uri_has_correct_prefix(self):
+        """get_qrcode_data_uri 应返回 data:image/png;base64, 前缀"""
+        order = _make_order()
+        result = order.get_qrcode_data_uri()
+
+        assert result.startswith("data:image/png;base64,")
+        # 前缀之后是合法 base64
+        b64_part = result[len("data:image/png;base64,"):]
+        decoded = base64.b64decode(b64_part)
+        assert len(decoded) > 0
