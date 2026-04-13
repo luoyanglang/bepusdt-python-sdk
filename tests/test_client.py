@@ -4,7 +4,7 @@ import pytest
 import requests
 from unittest.mock import Mock, patch
 from bepusdt import BEpusdtClient, OrderStatus, TradeType, APIError
-from bepusdt.exceptions import ServerError, ClientError, NetworkError, RequestTimeoutError
+from bepusdt.exceptions import ServerError, ClientError, NetworkError, RequestTimeoutError, ValidationError
 
 
 class TestBEpusdtClient:
@@ -534,3 +534,42 @@ class TestCreateOrderParamDetails:
         assert called_data["address"] == "TN9RRaXkCFtTXRso2GdTZxSxxwufzxLQPP"
         assert called_data["fiat"] == "USD"
         assert called_data["name"] == "VIP会员"
+
+    # --- Day 13: HTTPS 强制校验 ---
+
+    def test_init_with_http_api_url_raises_validation_error(self):
+        """api_url 使用 http:// 时应抛出 ValidationError"""
+        with pytest.raises(ValidationError, match="api_url 必须使用 HTTPS 协议"):
+            BEpusdtClient(
+                api_url="http://insecure.example.com",
+                api_token="test_token"
+            )
+
+    def test_init_with_https_api_url_succeeds(self):
+        """api_url 使用 https:// 时应正常初始化"""
+        client = BEpusdtClient(
+            api_url="https://secure.example.com",
+            api_token="test_token"
+        )
+        assert client.api_url == "https://secure.example.com"
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_create_order_with_http_notify_url_raises_validation_error(self, mock_post):
+        """notify_url 使用 http:// 时应抛出 ValidationError"""
+        with pytest.raises(ValidationError, match="notify_url 必须使用 HTTPS 协议"):
+            self.client.create_order(
+                order_id="ORDER_001",
+                amount=10.0,
+                notify_url="http://insecure.example.com/notify"
+            )
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_create_order_with_https_notify_url_succeeds(self, mock_post):
+        """notify_url 使用 https:// 时应正常创建订单"""
+        mock_post.return_value = self._mock_success_response()
+        order = self.client.create_order(
+            order_id="ORDER_001",
+            amount=10.0,
+            notify_url="https://secure.example.com/notify"
+        )
+        assert order.trade_id == "test_trade_123"

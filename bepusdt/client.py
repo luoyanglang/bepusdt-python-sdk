@@ -45,6 +45,10 @@ class BEpusdtClient:
         max_retries: int = 3,
         retry_delay: float = 1.0
     ):
+        if not api_url.startswith("https://"):
+            raise ValidationError(
+                f"api_url 必须使用 HTTPS 协议（以 https:// 开头），当前值: {api_url!r}"
+            )
         self.api_url = api_url.rstrip("/")
         self.api_token = api_token
         self.timeout = timeout
@@ -126,6 +130,10 @@ class BEpusdtClient:
             ...     name="VIP会员"
             ... )
         """
+        if not notify_url.startswith("https://"):
+            raise ValidationError(
+                f"notify_url 必须使用 HTTPS 协议（以 https:// 开头），当前值: {notify_url!r}"
+            )
         params = {
             "order_id": order_id,
             "amount": int(amount) if amount == int(amount) else amount,
