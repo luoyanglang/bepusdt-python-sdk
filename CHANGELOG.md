@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.7] - 2026-04-14
+
+### Tests
+- 新建 `tests/test_exceptions.py`：覆盖所有异常继承链、属性存储、向后兼容别名
+- 测试场景：8 种异常的 `issubclass` 继承关系验证；`APIError`/`ServerError`/`ClientError` 属性存储（`status_code`/`response`）；`TimeoutError` 别名等同于 `RequestTimeoutError`；所有 SDK 异常均可用 `BEpusdtError` 捕获
+
 ## [0.3.6] - 2026-04-12
 
 ### Tests

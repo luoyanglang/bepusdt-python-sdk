@@ -10,7 +10,7 @@ from .exceptions import (
 TimeoutError = RequestTimeoutError
 from .models import Order, OrderStatus, TradeType
 
-__version__ = "0.3.5"
+__version__ = "0.3.7"
 __author__ = "luoyanglang"
 __url__ = "https://github.com/luoyanglang/bepusdt-python-sdk"
 __all__ = [
