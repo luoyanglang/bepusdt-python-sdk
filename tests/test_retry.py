@@ -1,11 +1,10 @@
 """retry_on_error 装饰器测试"""
 
-import time
 from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from bepusdt.exceptions import NetworkError, RequestTimeoutError, ServerError, ClientError
+from bepusdt.exceptions import NetworkError, RequestTimeoutError, ClientError
 from bepusdt.retry import retry_on_error
 
 

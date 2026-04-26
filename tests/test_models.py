@@ -21,9 +21,9 @@ class TestOrder:
             actual_amount=1.35,
             token="TQhAwH4zSsgP78CdqMNqpEDik988888888",
             expiration_time=600,
-            payment_url="https://pay.example.com/xxx"
+            payment_url="https://pay.example.com/xxx",
         )
-        
+
         assert order.trade_id == "TRD_001"
         assert order.order_id == "ORD_001"
         assert order.amount == 10.0
@@ -40,9 +40,9 @@ class TestOrder:
             token="TQhAwH4zSsgP78CdqMNqpEDik988888888",
             expiration_time=600,
             payment_url="https://pay.example.com/xxx",
-            status=OrderStatus.SUCCESS
+            status=OrderStatus.SUCCESS,
         )
-        
+
         assert order.status == OrderStatus.SUCCESS
 
 
@@ -139,7 +139,6 @@ class TestTradeType:
 
     def test_is_enum_instance(self):
         """成员是枚举实例，同时也是字符串"""
-        from enum import Enum
         assert isinstance(TradeType.USDT_TRC20, TradeType)
         assert isinstance(TradeType.USDT_TRC20, str)
 
@@ -205,6 +204,6 @@ class TestOrderQRCode:
 
         assert result.startswith("data:image/png;base64,")
         # 前缀之后是合法 base64
-        b64_part = result[len("data:image/png;base64,"):]
+        b64_part = result[len("data:image/png;base64,") :]
         decoded = base64.b64decode(b64_part)
         assert len(decoded) > 0
