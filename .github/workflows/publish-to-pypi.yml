@@ -7,15 +7,17 @@ on:
 
 jobs:
   publish:
-    name: Build & Publish
+    name: Build, Publish & Notify
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Extract version
         id: version
@@ -26,27 +28,82 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
           BODY=$(awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{if(flag) exit} flag" CHANGELOG.md)
+          if [ -z "$BODY" ]; then
+            echo "CHANGELOG.md 中缺少版本 $VERSION 的条目" >&2
+            exit 1
+          fi
           echo "BODY<<EOF" >> $GITHUB_OUTPUT
           echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          TELEGRAM_BODY=$(printf "%s\n" "$BODY" | sed '/^[[:space:]]*$/d' | head -30)
+          echo "TELEGRAM_BODY<<EOF" >> $GITHUB_OUTPUT
+          echo "$TELEGRAM_BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.12'
 
-      - name: Install build tools
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install build twine
+          python -m pip install -e ".[dev]"
+          python -m pip install twine
+
+      - name: Check formatting
+        run: python -m black --check bepusdt tests
+
+      - name: Lint
+        run: python -m flake8 bepusdt tests
+
+      - name: Test
+        run: python -m pytest tests
 
       - name: Build package
-        run: python -m build
+        run: |
+          rm -rf build dist bepusdt.egg-info
+          python -m build --sdist --wheel
+
+      - name: Validate package
+        env:
+          TAG_VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          python -m twine check dist/*
+          python - <<'PY'
+          import email.parser
+          import os
+          import pathlib
+          import sys
+          import zipfile
+
+          tag_version = os.environ["TAG_VERSION"]
+          wheels = sorted(pathlib.Path("dist").glob("*.whl"))
+          sdists = sorted(pathlib.Path("dist").glob("*.tar.gz"))
+
+          if len(wheels) != 1 or len(sdists) != 1:
+              raise SystemExit(f"expected one wheel and one sdist, got wheels={wheels}, sdists={sdists}")
+
+          with zipfile.ZipFile(wheels[0]) as wheel:
+              names = wheel.namelist()
+              metadata_name = next((name for name in names if name.endswith(".dist-info/METADATA")), None)
+              if metadata_name is None:
+                  raise SystemExit("wheel is missing METADATA")
+              metadata = email.parser.Parser().parsestr(wheel.read(metadata_name).decode("utf-8"))
+
+          package_version = metadata["Version"]
+          if package_version != tag_version:
+              raise SystemExit(f"tag v{tag_version} does not match package version {package_version}")
+          if any(name.startswith("build/") for name in names):
+              raise SystemExit("wheel contains build/ artifacts")
+          PY
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+          attestations: false
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -56,3 +113,45 @@ jobs:
           body: ${{ steps.changelog.outputs.BODY }}
           draft: false
           prerelease: false
+
+      - name: Notify Telegram Group
+        uses: appleboy/telegram-action@v1.0.1
+        with:
+          to: ${{ secrets.TELEGRAM_GROUP_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            🎉 *BEpusdt Python SDK ${{ github.ref_name }} 发布！*
+
+            📝 更新内容:
+            ${{ steps.changelog.outputs.TELEGRAM_BODY }}
+
+            🔗 [查看详情](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }})
+
+            💻 安装命令:
+            ```
+            pip install --upgrade bepusdt
+            ```
+
+            📚 https://github.com/${{ github.repository }}
+
+      - name: Notify Telegram Channel
+        uses: appleboy/telegram-action@v1.0.1
+        with:
+          to: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            🎉 *BEpusdt Python SDK ${{ github.ref_name }} 发布！*
+
+            📝 更新内容:
+            ${{ steps.changelog.outputs.TELEGRAM_BODY }}
+
+            🔗 [查看详情](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }})
+
+            💻 安装命令:
+            ```
+            pip install --upgrade bepusdt
+            ```
+
+            📚 https://github.com/${{ github.repository }}
