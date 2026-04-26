@@ -27,16 +27,22 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "importlib-metadata>=4.6; python_version < '3.8'",
     "requests>=2.25.0",
 ]
 
 [project.optional-dependencies]
+qrcode = [
+    "qrcode[pil]>=7.0.0",
+]
 dev = [
+    "build>=1.0.0",
     "pytest>=7.0.0",
     "pytest-cov>=3.0.0",
     "black>=22.0.0",
     "flake8>=4.0.0",
     "mypy>=0.950",
+    "qrcode[pil]>=7.0.0",
 ]
 
 [project.urls]
@@ -47,6 +53,10 @@ Issues = "https://github.com/luoyanglang/bepusdt-python-sdk/issues"
 
 [tool.setuptools_scm]
 write_to = "bepusdt/_version.py"
+
+[tool.setuptools.packages.find]
+include = ["bepusdt*"]
+exclude = ["tests*", "examples*"]
 
 [tool.black]
 line-length = 120
