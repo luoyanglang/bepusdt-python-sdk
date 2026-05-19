@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.9] - 2026-05-19
+
+### Security
+- 加固 `verify_callback()`：非字典回调数据、缺失签名或非字符串签名现在返回 `False`，避免商户回调接口因畸形请求抛出 500。
+- 补充回调安全说明：签名验证只证明回调来源可信，商户仍必须校验本地订单号、金额、状态流转，并保证 `trade_id` / `block_transaction_id` 幂等处理。
+
+### Docs
+- 更新 README、API、FAQ 和示例文档中的回调代码，避免用户误以为“签名有效即可直接发货”。
+- 更新 Flask/FastAPI 示例：移除 `debug=True`，避免向客户端返回原始异常信息，并加入订单金额校验和幂等处理示例。
+
+### CI
+- 将 `examples/` 纳入 black 和 flake8 门禁，避免示例代码继续漂移。
+- 发布流程仅保留 Telegram 频道通知，避免同一发布消息重复投递。
+- 新增 gitleaks baseline，压掉测试/文档里钱包地址样例导致的历史误报，同时保留默认密钥检测规则。
+- 从 sdist 中排除 `.github/` 工作流文件和开发治理/工具配置文件，减少发布包中的非运行时内容。
+
+### Tests
+- 新增回调畸形输入回归测试，覆盖非 dict payload 和非字符串签名。
+
 ## [0.3.8] - 2026-05-19
 
 ### Fixed
