@@ -216,6 +216,17 @@ class TestBEpusdtClient:
         # 验证签名
         assert self.client.verify_callback(callback_data) is False
 
+    @pytest.mark.parametrize("callback_data", [None, [], "not-json"])
+    def test_verify_callback_rejects_non_dict_payload(self, callback_data):
+        """非字典回调数据应返回 False，而不是抛异常导致商户接口 500"""
+        assert self.client.verify_callback(callback_data) is False
+
+    def test_verify_callback_rejects_non_string_signature(self):
+        """非字符串签名应返回 False，避免 compare_digest 类型异常"""
+        callback_data = {"trade_id": "test_trade_123", "signature": 123}
+
+        assert self.client.verify_callback(callback_data) is False
+
     def test_init_produces_no_stdout_output(self, capsys):
         """测试初始化不产生 stdout 输出"""
         BEpusdtClient(api_url="https://test.example.com", api_token="test_token")

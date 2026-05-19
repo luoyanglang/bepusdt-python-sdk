@@ -237,7 +237,7 @@ class BEpusdtClient:
 
         return Order.from_dict(order_data)
 
-    def verify_callback(self, callback_data: Dict[str, Any]) -> bool:
+    def verify_callback(self, callback_data: Any) -> bool:
         """验证支付回调签名
 
         Args:
@@ -275,8 +275,13 @@ class BEpusdtClient:
             ...             return "ok", 200
             ...     return "fail", 400
         """
+        if not isinstance(callback_data, dict):
+            return False
+
         received_signature = callback_data.get("signature")
         if not received_signature:
+            return False
+        if not isinstance(received_signature, str):
             return False
 
         params = {k: v for k, v in callback_data.items() if k != "signature"}
