@@ -53,10 +53,10 @@ jobs:
           python -m pip install twine
 
       - name: Check formatting
-        run: python -m black --check bepusdt tests
+        run: python -m black --check bepusdt tests examples
 
       - name: Lint
-        run: python -m flake8 bepusdt tests
+        run: python -m flake8 bepusdt tests examples
 
       - name: Test
         run: python -m pytest tests
@@ -113,27 +113,6 @@ jobs:
           body: ${{ steps.changelog.outputs.BODY }}
           draft: false
           prerelease: false
-
-      - name: Notify Telegram Group
-        uses: appleboy/telegram-action@v1.0.1
-        with:
-          to: ${{ secrets.TELEGRAM_GROUP_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          format: markdown
-          message: |
-            🎉 *BEpusdt Python SDK ${{ github.ref_name }} 发布！*
-
-            📝 更新内容:
-            ${{ steps.changelog.outputs.TELEGRAM_BODY }}
-
-            🔗 [查看详情](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }})
-
-            💻 安装命令:
-            ```
-            pip install --upgrade bepusdt
-            ```
-
-            📚 https://github.com/${{ github.repository }}
 
       - name: Notify Telegram Channel
         uses: appleboy/telegram-action@v1.0.1
