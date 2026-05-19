@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.8] - 2026-05-19
+
+### Fixed
+- 修复 `TradeType` 枚举参与签名时使用枚举成员名的问题；现在签名会使用实际请求值，例如 `usdt.trc20`，避免默认下单参数与服务端验签值不一致。
+- 修复发布包版本被 `setup.py` 写死为 `0.3.1` 的问题；包版本现在统一由 Git tag 通过 `setuptools_scm` 推导。
+- 限制打包时的包发现范围，防止本地残留 `build/` 目录污染 wheel 内容。
+
+### CI
+- 新增 main / PR CI，覆盖 Python 3.8、3.9、3.10、3.11、3.12，并运行格式检查、lint 和测试。
+- 加强 tag 发布流程：发布前必须通过测试、构建、`twine check`、tag 与包版本一致性校验，以及 wheel 污染检查。
+- Telegram 通知改为 PyPI 发布和 GitHub Release 成功后再发送，避免发布失败时误报成功。
+- 固定 Telegram GitHub Action 版本，避免使用浮动 `master` 分支处理通知 token。
+
+### Tests
+- 新增 `TradeType` 枚举签名回归测试，确保枚举值和等价字符串生成相同签名。
+- 新增打包元数据回归测试，确保构建版本可由 `setuptools_scm` 控制，且 wheel 不包含 `build/` 产物。
+
+### Release Notes
+- 这是发版链路修复版本。此前 `v0.3.3` 至 `v0.3.7` 的 Git tag 已存在，但 PyPI 发布因版本号错误失败，PyPI 最新版本仍停留在 `0.3.1`。
+
 ## [0.3.7] - 2026-04-14
 
 ### Tests
@@ -128,6 +148,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复 amount 参数类型导致的签名错误
 - 优化签名算法，正确处理空值
 
+[0.3.8]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.8
+[0.3.7]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.7
+[0.3.6]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.6
+[0.3.5]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.5
 [0.3.4]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.4
 [0.3.3]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.3
 [0.3.2]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.2
