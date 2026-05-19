@@ -38,7 +38,8 @@ def generate_signature(params: Dict[str, Any], api_token: str) -> str:
 
     # 添加 token 并计算 MD5
     sign_str = param_str + api_token
-    signature = hashlib.md5(sign_str.encode("utf-8")).hexdigest().lower()
+    # BEpusdt gateway protocol requires token-appended MD5 signatures.
+    signature = hashlib.md5(sign_str.encode("utf-8")).hexdigest().lower()  # nosemgrep
 
     return signature
 

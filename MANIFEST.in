@@ -1,5 +1,11 @@
 include README.md
 include LICENSE
+exclude .flake8
+exclude .gitleaks.baseline.json
+exclude .gitattributes
+exclude .gitignore
+exclude FIX-PLAN.md
 recursive-include bepusdt *.py
+prune .github
 prune tests
 prune examples
