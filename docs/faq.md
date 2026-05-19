@@ -85,9 +85,13 @@ def notify():
 ```python
 callback_data = request.get_json()
 if client.verify_callback(callback_data):
-    # 签名验证通过
-    pass
+    # 签名验证通过后，还要校验本地订单号、金额、状态流转和幂等发货
+    mark_order_paid_once(callback_data)
 ```
+
+`verify_callback()` 只验证回调签名是否来自可信 BEpusdt 服务，不会替代商户
+系统自己的订单校验。支付成功回调可能因为网络失败被重试，业务处理必须保证
+同一个 `trade_id` 或 `block_transaction_id` 只发货一次。
 
 ### Q: 订单状态有哪些？
 
@@ -332,14 +336,15 @@ print(f"签名: {signature}")
 ```python
 @app.route('/notify', methods=['POST'])
 def notify():
-    data = request.get_json()
+    data = request.get_json(silent=True)
     
     # 验证签名
     if not client.verify_callback(data):
         return "fail", 400
     
-    # 处理业务逻辑
-    # ...
+    # 校验本地订单号、金额、状态流转，并用事务/唯一约束保证幂等
+    if data["status"] == 2 and mark_order_paid_once(data):
+        deliver_order(data["order_id"])
     
     return "ok", 200  # 必须返回 "ok"
 ```

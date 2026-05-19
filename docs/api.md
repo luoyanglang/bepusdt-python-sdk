@@ -195,6 +195,12 @@ is_valid = client.verify_callback(callback_data)
 
 **返回：** bool
 
+**安全边界：**
+- `True` 只表示签名有效，不能单独作为发货条件。
+- 商户系统仍需按本地订单校验 `order_id`、`amount`、`status` 状态流转。
+- 支付成功处理必须幂等，建议用数据库唯一约束或事务确保同一个
+  `trade_id` / `block_transaction_id` 不会重复发货。
+
 ---
 
 ## 数据模型
@@ -372,5 +378,6 @@ BEpusdt 会向 `notify_url` 发送 POST 请求：
 
 **重要：**
 - 回调地址必须使用 HTTPS
-- 必须验证签名
+- 必须验证签名，并校验本地订单号、金额和订单状态
+- 支付成功处理必须幂等，避免重复回调或手动重试导致重复发货
 - 返回 `"ok"` 表示成功，返回 `"fail"` 表示失败

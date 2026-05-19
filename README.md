@@ -138,11 +138,17 @@ if order.status == OrderStatus.SUCCESS:
 ```python
 @app.route('/notify', methods=['POST'])
 def notify():
-    data = request.get_json()
-    if client.verify_callback(data):
-        # 处理支付成功
-        return "ok", 200
-    return "fail", 400
+    data = request.get_json(silent=True)
+    if not client.verify_callback(data):
+        return "fail", 400
+
+    # 签名只证明回调来自 BEpusdt。
+    # 发货前仍需查询本地订单并校验 order_id、amount、status 状态流转，
+    # 再用数据库唯一约束或事务确保 trade_id/block_transaction_id 只处理一次。
+    if data["status"] == 2 and mark_order_paid_once(data):
+        deliver_order(data["order_id"])
+
+    return "ok", 200
 ```
 
 ### 生成二维码

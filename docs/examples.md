@@ -98,15 +98,14 @@ def create_payment():
 
 @app.route('/payment/notify', methods=['POST'])
 def payment_notify():
-    callback_data = request.get_json()
+    callback_data = request.get_json(silent=True)
     
     if not client.verify_callback(callback_data):
         return "fail", 400
     
-    if callback_data['status'] == 2:
-        # 支付成功，处理业务逻辑
-        order_id = callback_data['order_id']
-        # 更新订单状态、开通会员等
+    if callback_data['status'] == 2 and mark_order_paid_once(callback_data):
+        # 校验本地订单号、金额、状态流转后，再开通会员或发货
+        deliver_order(callback_data['order_id'])
         
     return "ok", 200
 
@@ -148,9 +147,9 @@ async def payment_notify(request: Request):
     if not client.verify_callback(callback_data):
         return {"status": "fail"}
     
-    if callback_data['status'] == 2:
-        # 支付成功
-        pass
+    if callback_data['status'] == 2 and mark_order_paid_once(callback_data):
+        # 校验本地订单号、金额、状态流转后，再开通会员或发货
+        await deliver_order(callback_data['order_id'])
         
     return {"status": "ok"}
 ```
@@ -191,9 +190,9 @@ def payment_notify(request):
     if not client.verify_callback(callback_data):
         return HttpResponse("fail", status=400)
     
-    if callback_data['status'] == 2:
-        # 支付成功
-        pass
+    if callback_data['status'] == 2 and mark_order_paid_once(callback_data):
+        # 校验本地订单号、金额、状态流转后，再开通会员或发货
+        deliver_order(callback_data['order_id'])
         
     return HttpResponse("ok")
 ```

@@ -1,17 +1,22 @@
 """FastAPI 集成示例"""
 
+import logging
+
 from fastapi import FastAPI, Request
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
+
 from bepusdt import BEpusdtClient
 
 app = FastAPI()
+logger = logging.getLogger(__name__)
 
 # 初始化客户端
-client = BEpusdtClient(
-    api_url="https://your-bepusdt-server.com",
-    api_token="your-api-token"
-)
+client = BEpusdtClient(api_url="https://your-bepusdt-server.com", api_token="your-api-token")
+
+# 示例内存状态仅用于演示。生产环境请替换为数据库事务和唯一约束。
+created_orders = {}
+processed_trade_ids = set()
 
 
 class CreatePaymentRequest(BaseModel):
@@ -29,42 +34,49 @@ async def create_payment(req: CreatePaymentRequest):
             amount=req.amount,
             notify_url="https://your-domain.com/api/payment/notify",
             redirect_url="https://your-domain.com/payment/success",
-            trade_type=req.trade_type
+            trade_type=req.trade_type,
         )
-        
-        return {
-            "success": True,
-            "payment_url": order.payment_url,
-            "amount": order.actual_amount,
-            "address": order.token
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    except Exception:
+        logger.exception("create payment failed")
+        return JSONResponse({"success": False, "error": "payment creation failed"}, status_code=502)
+
+    created_orders[req.order_id] = req.amount
+    return {
+        "success": True,
+        "payment_url": order.payment_url,
+        "amount": order.actual_amount,
+        "address": order.token,
+    }
 
 
 @app.post("/api/payment/notify")
 async def payment_notify(request: Request):
     """支付回调"""
-    callback_data = await request.json()
-    
-    # 验证签名
+    try:
+        callback_data = await request.json()
+    except ValueError:
+        return PlainTextResponse(content="fail", status_code=400)
+
     if not client.verify_callback(callback_data):
         return PlainTextResponse(content="fail", status_code=400)
-    
-    # 处理支付
-    order_id = callback_data['order_id']
-    status = callback_data['status']
-    
-    if status == 2:  # 支付成功
-        print(f"订单 {order_id} 支付成功")
-        # 更新订单状态、开通会员等业务逻辑
-    
+
+    order_id = callback_data.get("order_id")
+    trade_id = callback_data.get("trade_id")
+    status = callback_data.get("status")
+    expected_amount = created_orders.get(order_id)
+
+    if expected_amount is None or float(callback_data.get("amount", -1)) != expected_amount:
+        return PlainTextResponse(content="fail", status_code=400)
+
+    if status == 2 and trade_id not in processed_trade_ids:
+        # 生产环境请使用数据库原子更新，确保重复回调不会重复发货。
+        processed_trade_ids.add(trade_id)
+        logger.info("payment succeeded for order %s", order_id)
+
     return PlainTextResponse(content="ok", status_code=200)
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    uvicorn.run(app, host="127.0.0.1", port=8000)
