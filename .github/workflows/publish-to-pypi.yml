@@ -14,35 +14,39 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
 
       - name: Extract version
         id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       - name: Extract changelog for this version
         id: changelog
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
-          BODY=$(awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{if(flag) exit} flag" CHANGELOG.md)
+          BODY=$(awk -v version="$VERSION" 'index($0, "## [" version "]") == 1 {flag=1; next} /^## \[/{if(flag) exit} flag' CHANGELOG.md)
           if [ -z "$BODY" ]; then
             echo "CHANGELOG.md 中缺少版本 $VERSION 的条目" >&2
             exit 1
           fi
-          echo "BODY<<EOF" >> $GITHUB_OUTPUT
-          echo "$BODY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "BODY<<EOF"
+            printf "%s\n" "$BODY"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
           TELEGRAM_BODY=$(printf "%s\n" "$BODY" | sed '/^[[:space:]]*$/d' | head -30)
-          echo "TELEGRAM_BODY<<EOF" >> $GITHUB_OUTPUT
-          echo "$TELEGRAM_BODY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "TELEGRAM_BODY<<EOF"
+            printf "%s\n" "$TELEGRAM_BODY"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -76,6 +80,7 @@ jobs:
           import os
           import pathlib
           import sys
+          import tarfile
           import zipfile
 
           tag_version = os.environ["TAG_VERSION"]
@@ -97,6 +102,22 @@ jobs:
               raise SystemExit(f"tag v{tag_version} does not match package version {package_version}")
           if any(name.startswith("build/") for name in names):
               raise SystemExit("wheel contains build/ artifacts")
+
+          blocked_roots = (".github/", "examples/", "tests/")
+          blocked_files = {
+              ".flake8",
+              ".gitattributes",
+              ".gitignore",
+              ".gitleaks.baseline.json",
+              "FIX-PLAN.md",
+          }
+          with tarfile.open(sdists[0], "r:gz") as sdist:
+              sdist_names = sdist.getnames()
+
+          for name in sdist_names:
+              relative_name = name.split("/", 1)[1] if "/" in name else name
+              if relative_name in blocked_files or relative_name.startswith(blocked_roots):
+                  raise SystemExit(f"sdist contains non-runtime file: {relative_name}")
           PY
 
       - name: Publish to PyPI
@@ -106,7 +127,7 @@ jobs:
           attestations: false
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
