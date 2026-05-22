@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.10] - 2026-05-22
+
+### Docs
+- 补充 `0.3.1` 及更早版本升级到 `0.3.9+` 的注意事项，覆盖签名、回调安全和发布链路恢复。
+- 明确当前已验证的 BEpusdt 网关基线为官方上游 `v1.23.6-4-g1e52ee2`。
+- 在 README、API 和 FAQ 中同步安装 extras、Python 版本验证范围和回调安全说明。
+- 新增发布维护说明，记录 tag 发布流程、sdist/wheel 内容边界、Telegram 通知策略和 PyPI Trusted Publisher 迁移前置条件。
+
+### CI
+- 将 GitHub Actions 更新到 Node 24 runtime 兼容版本：`actions/checkout@v6`、`actions/setup-python@v6`、`softprops/action-gh-release@v3`。
+- 修复发布 workflow 提取 CHANGELOG 版本正文时只匹配精确标题的问题；现在支持 `## [版本] - 日期` 格式，避免 tag 发布时误判缺少版本条目。
+- 发布校验新增 sdist 内容检查，防止 `.github/`、`tests/`、`examples/` 和开发治理文件重新进入源码包。
+
+### Release Notes
+- PyPI Trusted Publisher 暂未启用；当前发布仍使用 `PYPI_API_TOKEN`，等待 PyPI 项目侧 trusted publisher 配置确认后再迁移。
+
 ## [0.3.9] - 2026-05-19
 
 ### Security
@@ -167,6 +183,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复 amount 参数类型导致的签名错误
 - 优化签名算法，正确处理空值
 
+[0.3.10]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.10
+[0.3.9]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.9
 [0.3.8]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.8
 [0.3.7]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.7
 [0.3.6]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.6
