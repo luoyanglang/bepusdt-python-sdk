@@ -49,6 +49,27 @@ pip install bepusdt
 pip install bepusdt[qrcode]
 ```
 
+## 🔖 兼容性
+
+- 当前已验证的 BEpusdt 网关基线：官方上游 `v1.23.6-4-g1e52ee2`。
+- SDK 包 metadata 仍允许 Python 3.7+；当前 CI 持续验证 Python 3.8 至
+  3.12。Python 3.7 已进入生命周期末期，最低版本调整会作为兼容性边界单独规划。
+
+## ⬆️ 从旧版升级
+
+如果你从 PyPI `0.3.1` 或更早版本升级，建议直接升级到 `0.3.9+`：
+
+```bash
+pip install --upgrade bepusdt
+```
+
+升级后请重点确认：
+
+- `TradeType` 枚举参与签名时使用实际请求值，默认下单签名已与服务端一致。
+- 版本号由 Git tag 推导，PyPI 包版本已恢复正常发布。
+- 回调示例已强化安全边界；签名验证通过后仍需校验本地订单、金额、状态流转和幂等发货。
+- Flask/FastAPI 示例不再返回原始异常，也不再启用 Flask debug 模式。
+
 ## 🚀 快速开始
 
 ```python
@@ -80,6 +101,7 @@ print(f"🔗 支付链接: {order.payment_url}")
 - 📖 [API 参考](./docs/api.md)
 - 💡 [使用示例](./docs/examples.md)
 - ❓ [常见问题](./docs/faq.md)
+- 🧰 [发布维护说明](./docs/release.md)
 
 ## 🔧 核心功能
 

@@ -8,6 +8,12 @@
 pip install bepusdt
 ```
 
+二维码功能是可选依赖：
+
+```bash
+pip install bepusdt[qrcode]
+```
+
 ### Q: 如何从源码安装？
 
 ```bash
@@ -371,7 +377,24 @@ print(bepusdt.__version__)
 
 ### Q: 支持哪些 Python 版本？
 
-Python 3.7+
+SDK 包 metadata 仍允许 Python 3.7+。当前 CI 持续验证 Python 3.8、3.9、
+3.10、3.11 和 3.12；Python 3.7 已进入生命周期末期，最低版本调整会作为
+兼容性边界单独规划。
+
+### Q: 从 PyPI 0.3.1 升级到 0.3.9+ 需要注意什么？
+
+建议直接升级到最新版本：
+
+```bash
+pip install --upgrade bepusdt
+```
+
+升级后重点确认：
+
+1. `TradeType` 枚举签名使用实际请求值，默认下单签名已与服务端一致。
+2. 回调处理不能只依赖签名验证，还需要校验本地订单号、金额、状态流转和幂等发货。
+3. Flask/FastAPI 示例已移除 debug 和原始异常回显，生产集成应按新示例处理错误。
+4. 发布链路从 `0.3.8` 起恢复正常，PyPI 最新版本不再停留在 `0.3.1`。
 
 ## 更多帮助
 

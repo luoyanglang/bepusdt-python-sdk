@@ -6,6 +6,7 @@ exclude .gitattributes
 exclude .gitignore
 exclude FIX-PLAN.md
 recursive-include bepusdt *.py
+recursive-include docs *.md
 prune .github
 prune tests
 prune examples
