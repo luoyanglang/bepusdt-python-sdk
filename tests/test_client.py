@@ -110,6 +110,52 @@ class TestBEpusdtClient:
         assert order.status == OrderStatus.SUCCESS
         assert order.block_transaction_id == "0x123abc"
 
+    @pytest.mark.parametrize(
+        ("raw_status", "expected_status"),
+        [
+            (1, OrderStatus.WAITING),
+            (2, OrderStatus.SUCCESS),
+            (3, OrderStatus.TIMEOUT),
+            (4, OrderStatus.CANCELED),
+            (5, OrderStatus.CONFIRMING),
+            (6, OrderStatus.FAILED),
+        ],
+    )
+    @patch("bepusdt.client.requests.Session.get")
+    def test_query_order_accepts_gateway_status_values(self, mock_get, raw_status, expected_status):
+        """查询接口应接受 Go 网关当前全部订单状态值"""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "trade_id": "test_trade_123",
+            "trade_hash": "",
+            "status": raw_status,
+            "return_url": "",
+        }
+        mock_get.return_value = mock_response
+
+        order = self.client.query_order(trade_id="test_trade_123")
+
+        assert order.status == expected_status
+
+    @patch("bepusdt.client.requests.Session.get")
+    def test_query_order_accepts_block_transaction_id_alias(self, mock_get):
+        """查询接口应兼容交易哈希字段别名"""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "trade_id": "test_trade_123",
+            "block_transaction_id": "0xabc123",
+            "status": 5,
+            "return_url": "",
+        }
+        mock_get.return_value = mock_response
+
+        order = self.client.query_order(trade_id="test_trade_123")
+
+        assert order.status == OrderStatus.CONFIRMING
+        assert order.block_transaction_id == "0xabc123"
+
     @patch("bepusdt.client.requests.Session.get")
     def test_query_order_not_found(self, mock_get):
         """测试查询不存在的订单"""
@@ -124,6 +170,21 @@ class TestBEpusdtClient:
             self.client.query_order(trade_id="not_exist")
 
         assert "订单不存在" in str(exc_info.value)
+
+    @patch("bepusdt.client.requests.Session.get")
+    def test_query_order_preserves_wrapped_gateway_error(self, mock_get):
+        """查询接口收到 Go 网关业务错误包装时应保留错误信息"""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"status_code": 400, "message": "订单不存在"}
+        mock_get.return_value = mock_response
+
+        with pytest.raises(APIError) as exc_info:
+            self.client.query_order(trade_id="not_exist")
+
+        assert str(exc_info.value) == "订单不存在"
+        assert exc_info.value.status_code == 400
+        assert exc_info.value.response == {"status_code": 400, "message": "订单不存在"}
 
     @patch("bepusdt.client.requests.Session.post")
     def test_create_order_with_zero_timeout(self, mock_post):
@@ -184,7 +245,7 @@ class TestBEpusdtClient:
             "order_id": "ORDER_001",
             "amount": 10.0,
             "actual_amount": "1.35",
-            "token": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+            "token": "sample-wallet-address",
             "block_transaction_id": "0x123abc",
             "status": 2,
         }
@@ -195,6 +256,43 @@ class TestBEpusdtClient:
         callback_data["signature"] = generate_signature(callback_data, "test_token")
 
         # 验证签名
+        assert self.client.verify_callback(callback_data) is True
+
+    def test_verify_callback_accepts_gateway_waiting_payload_with_empty_hash(self):
+        """等待支付回调的空交易哈希应按 Go 网关签名规则跳过"""
+        callback_data = {
+            "trade_id": "test_trade_123",
+            "order_id": "ORDER_001",
+            "amount": 10.0,
+            "actual_amount": "1.35",
+            "token": "sample-wallet-address",
+            "block_transaction_id": "",
+            "status": 1,
+        }
+
+        from bepusdt.signature import generate_signature
+
+        callback_data["signature"] = generate_signature(callback_data, "test_token")
+
+        assert self.client.verify_callback(callback_data) is True
+
+    @pytest.mark.parametrize("raw_status", [4, 5, 6])
+    def test_verify_callback_accepts_gateway_extended_status_values(self, raw_status):
+        """回调签名验证不应拒绝 Go 网关扩展订单状态"""
+        callback_data = {
+            "trade_id": "test_trade_123",
+            "order_id": "ORDER_001",
+            "amount": 10.0,
+            "actual_amount": "1.35",
+            "token": "sample-wallet-address",
+            "block_transaction_id": "0x123abc",
+            "status": raw_status,
+        }
+
+        from bepusdt.signature import generate_signature
+
+        callback_data["signature"] = generate_signature(callback_data, "test_token")
+
         assert self.client.verify_callback(callback_data) is True
 
     def test_verify_callback_invalid(self):

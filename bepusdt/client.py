@@ -218,6 +218,12 @@ class BEpusdtClient:
         response = self._get(url)
 
         # check-status 接口返回格式不同，需要特殊处理
+        if response.get("status_code") and response["status_code"] != 200:
+            raise APIError(
+                response.get("message", "订单不存在或查询失败"),
+                status_code=response["status_code"],
+                response=response,
+            )
         if "trade_id" not in response:
             raise APIError("订单不存在或查询失败", response=response)
 
@@ -232,7 +238,7 @@ class BEpusdtClient:
             "expiration_time": 0,  # 查询接口不返回此字段
             "payment_url": "",  # 查询接口不返回此字段
             "status": response["status"],
-            "block_transaction_id": response.get("trade_hash", ""),
+            "block_transaction_id": response.get("trade_hash") or response.get("block_transaction_id", ""),
         }
 
         return Order.from_dict(order_data)

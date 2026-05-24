@@ -45,6 +45,49 @@ class TestOrder:
 
         assert order.status == OrderStatus.SUCCESS
 
+    def test_from_dict_accepts_missing_optional_fields(self):
+        """缺失可选字段时仍可从创建订单响应生成订单对象"""
+        order = Order.from_dict(
+            {
+                "trade_id": "TRD_001",
+                "order_id": "ORD_001",
+                "amount": "10.0",
+                "actual_amount": "1.35",
+                "token": "sample-wallet-address",
+                "expiration_time": 600,
+                "payment_url": "https://pay.example.com/xxx",
+            }
+        )
+
+        assert order.trade_id == "TRD_001"
+        assert order.fiat is None
+        assert order.status is None
+        assert order.block_transaction_id is None
+
+    def test_from_dict_ignores_gateway_extra_fields(self):
+        """网关新增字段不应影响已知订单字段解析"""
+        order = Order.from_dict(
+            {
+                "fiat": "CNY",
+                "trade_type": "usdt.trc20",
+                "trade_id": "TRD_001",
+                "order_id": "ORD_001",
+                "name": "VIP",
+                "status": 1,
+                "amount": "10.0",
+                "actual_amount": "1.35",
+                "token": "sample-wallet-address",
+                "expiration_time": 600,
+                "payment_url": "https://pay.example.com/xxx",
+                "return_url": "",
+                "network": [],
+            }
+        )
+
+        assert order.trade_id == "TRD_001"
+        assert order.status == OrderStatus.WAITING
+        assert order.fiat == "CNY"
+
 
 class TestOrderStatus:
     """订单状态测试"""
