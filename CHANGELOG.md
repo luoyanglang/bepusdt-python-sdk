@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.11] - 2026-05-24
+
+### Fixed
+- `query_order()` 现在兼容查询响应中的 `block_transaction_id` 字段别名；当前上游网关仍返回 `trade_hash`，两种字段都会映射到 `Order.block_transaction_id`。
+- `query_order()` 收到上游业务错误包装时会保留 `message`、`status_code` 和原始响应，便于调用方区分订单不存在等业务失败。
+
+### Tests
+- 补充 `/pay/check-status/{trade_id}` 真实响应结构回归测试，覆盖 `trade_id`、`trade_hash`、`status` 和 `return_url`。
+- 补充查询状态 `1-6` 的解析测试，覆盖等待支付、成功、超时、取消、确认中和失败。
+- 补充 Go 网关真实回调字段签名测试，覆盖空 `block_transaction_id` 和扩展状态值。
+- 补充 `Order.from_dict()` 兼容测试，确保可选字段缺失和网关新增字段不会影响已知字段解析。
+
+### Docs
+- 明确 `query_order()` 的交易哈希映射规则和业务错误处理。
+- 补齐回调状态 `4/5/6` 的说明，保持文档与当前网关枚举一致。
+
 ## [0.3.10] - 2026-05-22
 
 ### Docs
@@ -183,6 +199,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复 amount 参数类型导致的签名错误
 - 优化签名算法，正确处理空值
 
+[0.3.11]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.11
 [0.3.10]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.10
 [0.3.9]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.9
 [0.3.8]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.8

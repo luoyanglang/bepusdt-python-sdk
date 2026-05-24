@@ -155,6 +155,10 @@ if order.status == OrderStatus.SUCCESS:
     print("✅ 支付成功")
 ```
 
+`query_order()` 会把网关返回的 `trade_hash` 映射为
+`order.block_transaction_id`；兼容网关如果直接返回 `block_transaction_id`，
+SDK 也会映射到同一属性。
+
 ### 验证回调
 
 ```python
@@ -172,6 +176,9 @@ def notify():
 
     return "ok", 200
 ```
+
+当前网关状态值为：`1` 等待支付、`2` 支付成功、`3` 支付超时、
+`4` 订单取消、`5` 等待区块确认、`6` 交易确认失败。
 
 ### 生成二维码
 

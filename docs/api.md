@@ -164,8 +164,12 @@ order = client.query_order(trade_id="xxx")
 
 **注意：**
 - 此接口不需要签名验证
+- 上游返回的 `trade_hash` 会映射为 `Order.block_transaction_id`
+- 如果兼容网关返回 `block_transaction_id`，SDK 也会映射为同一属性
 - 返回的 Order 对象中，只有 `trade_id`、`status`、`block_transaction_id` 字段有效
 - 其他字段为默认值
+- 订单不存在等业务错误会抛出 `APIError`，并保留网关返回的 `status_code`
+  和原始响应
 
 ---
 
@@ -210,6 +214,14 @@ is_valid = client.verify_callback(callback_data)
 - 支付成功处理必须幂等，建议用数据库唯一约束或事务确保同一个
   `trade_id` / `block_transaction_id` 不会重复发货。
 
+**当前网关状态值：**
+- `1`: 等待支付
+- `2`: 支付成功
+- `3`: 支付超时
+- `4`: 订单取消
+- `5`: 等待区块确认
+- `6`: 交易确认失败
+
 ---
 
 ## 数据模型
@@ -242,6 +254,9 @@ from bepusdt import OrderStatus
 OrderStatus.WAITING = 1   # 等待支付
 OrderStatus.SUCCESS = 2   # 支付成功
 OrderStatus.TIMEOUT = 3   # 支付超时
+OrderStatus.CANCELED = 4     # 订单取消
+OrderStatus.CONFIRMING = 5   # 等待区块确认
+OrderStatus.FAILED = 6       # 交易确认失败
 ```
 
 ---
