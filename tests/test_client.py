@@ -5,6 +5,7 @@ import requests
 from unittest.mock import Mock, patch
 from bepusdt import BEpusdtClient, OrderStatus, APIError
 from bepusdt.exceptions import ServerError, ClientError, NetworkError, RequestTimeoutError, ValidationError
+from bepusdt.signature import generate_signature
 
 
 class TestBEpusdtClient:
@@ -214,7 +215,7 @@ class TestBEpusdtClient:
 
     @patch("bepusdt.client.requests.Session.post")
     def test_create_order_with_zero_rate(self, mock_post):
-        """测试 rate=0 不被静默丢弃"""
+        """测试 rate=0 按网关 string 契约发送且不被静默丢弃"""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -236,7 +237,7 @@ class TestBEpusdtClient:
 
         called_data = mock_post.call_args.kwargs["json"]
         assert "rate" in called_data
-        assert called_data["rate"] == 0
+        assert called_data["rate"] == "0"
 
     def test_verify_callback_valid(self):
         """测试验证有效回调"""
@@ -620,6 +621,59 @@ class TestCreateOrderParamDetails:
         assert called_data["address"] == "TN9RRaXkCFtTXRso2GdTZxSxxwufzxLQPP"
         assert called_data["fiat"] == "USD"
         assert called_data["name"] == "VIP会员"
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_numeric_rate_is_signed_and_sent_as_string(self, mock_post):
+        """数字 rate 应按 Go 网关 string 字段契约参与签名和发送"""
+        mock_post.return_value = self._mock_success_response()
+        self.client.create_order(
+            order_id="ORDER_001",
+            amount=10.5,
+            notify_url="https://example.com/notify",
+            redirect_url="https://example.com/return",
+            rate=7.4,
+            timeout=180,
+        )
+
+        called_data = mock_post.call_args.kwargs["json"]
+        assert called_data["rate"] == "7.4"
+        unsigned = {k: v for k, v in called_data.items() if k != "signature"}
+        assert called_data["signature"] == generate_signature(unsigned, "test_token")
+
+    @patch("bepusdt.client.requests.Session.post")
+    def test_string_rate_prefix_syntax_is_preserved(self, mock_post):
+        """浮动汇率字符串语法应原样发送给 Go 网关"""
+        mock_post.return_value = self._mock_success_response()
+        self.client.create_order(
+            order_id="ORDER_001",
+            amount=10.5,
+            notify_url="https://example.com/notify",
+            rate="~1.02",
+        )
+
+        called_data = mock_post.call_args.kwargs["json"]
+        assert called_data["rate"] == "~1.02"
+
+    @pytest.mark.parametrize("amount", ["42", True, None])
+    def test_create_order_rejects_non_numeric_amount(self, amount):
+        """amount 必须是 int/float，避免无效金额进入网关签名请求"""
+        with pytest.raises(ValidationError, match="amount 必须是数字"):
+            self.client.create_order(
+                order_id="ORDER_001",
+                amount=amount,
+                notify_url="https://example.com/notify",
+            )
+
+    @pytest.mark.parametrize("timeout", ["180", 180.5, True])
+    def test_create_order_rejects_non_integer_timeout(self, timeout):
+        """timeout 必须是整数秒，避免网关收到类型不匹配字段"""
+        with pytest.raises(ValidationError, match="timeout 必须是整数秒"):
+            self.client.create_order(
+                order_id="ORDER_001",
+                amount=10,
+                notify_url="https://example.com/notify",
+                timeout=timeout,
+            )
 
     # --- Day 13: HTTPS 强制校验 ---
 

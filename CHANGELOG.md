@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.12] - 2026-05-25
+
+### Fixed
+- `create_order()` 现在会在签名和发送前将数字 `rate` 规范化为字符串，保持与 BEpusdt Go 网关 `rate` 字段契约一致。
+- `create_order()` 对 `amount` 和 `timeout` 增加本地类型校验，避免字符串金额或非整数超时生成无效下单请求。
+
+### Tests
+- 补充下单参数签名测试，覆盖数字 `rate`、浮动汇率字符串、`timeout`、`redirect_url` 等字段的请求与签名行为。
+- 补充支付类型契约测试，确认 SDK `TradeType` 与当前 BEpusdt 网关支持的 21 个交易类型一致。
+- 补充非法 `amount` / `timeout` 参数回归测试。
+
+### Docs
+- 更新 `create_order()` 参数说明，明确 `rate` 的字符串化规则。
+- 将订单超时时间说明对齐到当前 Go 网关行为：`180-3600` 秒由网关采用，越界或 `0` 使用网关配置默认值。
+- 明确字符串金额会被 SDK 本地拒绝。
+
 ## [0.3.11] - 2026-05-24
 
 ### Fixed
@@ -199,6 +215,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复 amount 参数类型导致的签名错误
 - 优化签名算法，正确处理空值
 
+[0.3.12]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.12
 [0.3.11]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.11
 [0.3.10]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.10
 [0.3.9]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.9

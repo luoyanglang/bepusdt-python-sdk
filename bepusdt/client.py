@@ -1,6 +1,7 @@
 """BEpusdt 客户端"""
 
 import logging
+import math
 import requests
 from typing import Optional, Dict, Any, Union
 from .signature import generate_signature, verify_signature
@@ -9,6 +10,30 @@ from .exceptions import APIError, NetworkError, RequestTimeoutError, ServerError
 from .retry import retry_on_error
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_amount(amount: Union[int, float]) -> Union[int, float]:
+    if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+        raise ValidationError(f"amount 必须是数字（int 或 float），当前值: {amount!r}")
+    if not math.isfinite(float(amount)):
+        raise ValidationError(f"amount 必须是有限数字，当前值: {amount!r}")
+    return int(amount) if amount == int(amount) else amount
+
+
+def _normalize_rate(rate: Union[int, float, str]) -> str:
+    if isinstance(rate, bool) or not isinstance(rate, (int, float, str)):
+        raise ValidationError(f"rate 必须是数字或字符串，当前值: {rate!r}")
+    if isinstance(rate, (int, float)):
+        if not math.isfinite(float(rate)):
+            raise ValidationError(f"rate 必须是有限数字，当前值: {rate!r}")
+        return str(int(rate)) if rate == int(rate) else str(rate)
+    return rate
+
+
+def _validate_timeout(timeout: int) -> int:
+    if isinstance(timeout, bool) or not isinstance(timeout, int):
+        raise ValidationError(f"timeout 必须是整数秒，当前值: {timeout!r}")
+    return timeout
 
 
 class BEpusdtClient:
@@ -51,13 +76,13 @@ class BEpusdtClient:
     def create_order(
         self,
         order_id: str,
-        amount: float,
+        amount: Union[int, float],
         notify_url: str,
         redirect_url: Optional[str] = None,
         address: Optional[str] = None,
         trade_type: str = TradeType.USDT_TRC20,
         timeout: Optional[int] = None,
-        rate: Optional[Union[float, str]] = None,
+        rate: Optional[Union[int, float, str]] = None,
         fiat: Optional[str] = None,
         name: Optional[str] = None,
     ) -> Order:
@@ -67,7 +92,7 @@ class BEpusdtClient:
 
         Args:
             order_id: 商户订单号，必须唯一
-            amount: 支付金额（法币）
+            amount: 支付金额（法币），必须是 int 或 float
             notify_url: 支付回调地址（必须 HTTPS）
             redirect_url: 支付成功跳转地址（可选）
             address: 指定收款地址（可选）
@@ -78,8 +103,10 @@ class BEpusdtClient:
                 - USDC: usdc.trc20, usdc.erc20, usdc.polygon, usdc.bep20,
                         usdc.aptos, usdc.solana, usdc.xlayer, usdc.arbitrum, usdc.base
                 - 原生代币: tron.trx, ethereum.eth, bsc.bnb
-            timeout: 订单超时时间（秒，最低60，可选）
-            rate: 自定义汇率（可选），支持 float 或特殊前缀字符串
+            timeout: 订单超时时间（秒，可选）；当前 Go 网关采用 180-3600，
+                传 0 或越界值时使用网关配置默认值
+            rate: 自定义汇率（可选），支持数字或特殊前缀字符串；数字会按
+                Go 网关字段契约转换为字符串后参与签名和发送
                 - 固定汇率：7.4（float）或 "7.4"（str）表示固定 7.4
                 - 浮动汇率："~1.02" 表示最新汇率上浮 2%，"~0.97" 表示下浮 3%
                 - 增减汇率："+0.3" 表示最新加 0.3，"-0.2" 表示最新减 0.2
@@ -123,7 +150,7 @@ class BEpusdtClient:
             raise ValidationError(f"notify_url 必须使用 HTTPS 协议（以 https:// 开头），当前值: {notify_url!r}")
         params = {
             "order_id": order_id,
-            "amount": int(amount) if amount == int(amount) else amount,
+            "amount": _normalize_amount(amount),
             "notify_url": notify_url,
             "trade_type": trade_type,
         }
@@ -137,9 +164,9 @@ class BEpusdtClient:
         if address:
             params["address"] = address
         if timeout is not None:
-            params["timeout"] = timeout
+            params["timeout"] = _validate_timeout(timeout)
         if rate is not None:
-            params["rate"] = rate
+            params["rate"] = _normalize_rate(rate)
         if fiat:
             params["fiat"] = fiat
         if name:

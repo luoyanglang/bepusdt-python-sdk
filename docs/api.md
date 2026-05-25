@@ -72,13 +72,13 @@ order = client.create_order(
 
 **参数：**
 - `order_id` (str): 商户订单号，必须唯一
-- `amount` (float): 支付金额（法币）⭐
+- `amount` (int | float): 支付金额（法币）⭐，字符串金额会被本地拒绝
 - `notify_url` (str): 支付回调地址（必须 HTTPS）
 - `redirect_url` (str, 可选): 支付成功跳转地址
 - `trade_type` (str, 可选): 支付类型，默认 `TradeType.USDT_TRC20`
 - `address` (str, 可选): 指定收款地址
-- `timeout` (int, 可选): 订单超时时间（秒），最低 60
-- `rate` (float | str, 可选): 自定义汇率
+- `timeout` (int, 可选): 订单超时时间（秒）；当前 Go 网关采用 `180-3600`，传 `0` 或越界值时使用网关配置默认值
+- `rate` (int | float | str, 可选): 自定义汇率；数字会转换为字符串后参与签名和发送
 - `fiat` (str, 可选): 法币类型，支持 CNY/USD/EUR/GBP/JPY，默认 CNY
 - `name` (str, 可选): 商品名称
 
@@ -129,6 +129,7 @@ TradeType.BNB_BEP20       # BNB (BSC)
 ```python
 # 固定汇率
 rate=7.4
+# 实际请求中会按 Go 网关契约发送为 "7.4"
 
 # 最新汇率上浮 2%
 rate="~1.02"

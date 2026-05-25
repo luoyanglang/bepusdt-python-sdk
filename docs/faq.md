@@ -254,7 +254,7 @@ order = client.create_order(
 # ❌ 错误
 order = client.create_order(
     order_id="ORDER_001",
-    amount="42",  # 字符串类型会导致签名错误
+    amount="42",  # 字符串金额会被 SDK 本地拒绝
     notify_url="https://example.com/notify "  # 末尾有空格
 )
 ```

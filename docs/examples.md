@@ -44,7 +44,7 @@ order = client.create_order(
     order_id="ORDER_003",
     amount=10.0,
     notify_url="https://your-domain.com/notify",
-    rate=7.4
+    rate=7.4  # SDK 会按 Go 网关契约发送为 "7.4"
 )
 
 # 最新汇率上浮 2%

@@ -156,6 +156,32 @@ class TestTradeType:
         """验证枚举成员总数为 21"""
         assert len(list(TradeType)) == 21
 
+    def test_values_match_gateway_trade_type_contract(self):
+        """SDK TradeType 应与当前 Go 网关交易类型契约一致"""
+        assert {member.value for member in TradeType} == {
+            "usdt.trc20",
+            "usdt.erc20",
+            "usdt.polygon",
+            "usdt.bep20",
+            "usdt.aptos",
+            "usdt.solana",
+            "usdt.xlayer",
+            "usdt.arbitrum",
+            "usdt.plasma",
+            "usdc.trc20",
+            "usdc.erc20",
+            "usdc.polygon",
+            "usdc.bep20",
+            "usdc.aptos",
+            "usdc.solana",
+            "usdc.xlayer",
+            "usdc.arbitrum",
+            "usdc.base",
+            "tron.trx",
+            "ethereum.eth",
+            "bsc.bnb",
+        }
+
     def test_string_comparison(self):
         """str Enum 可直接与字符串比较（向后兼容）"""
         assert TradeType.USDT_TRC20 == "usdt.trc20"
