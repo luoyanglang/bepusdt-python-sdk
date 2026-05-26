@@ -26,6 +26,24 @@ class TestBEpusdtClient:
         client = BEpusdtClient(api_url="https://test.example.com", api_token="test_token", timeout=60)
         assert client.timeout == 60
 
+    @pytest.mark.parametrize("timeout", [0, -1, "30", True])
+    def test_client_init_rejects_invalid_request_timeout(self, timeout):
+        """请求 timeout 必须是正数，避免 requests 收到无效超时配置"""
+        with pytest.raises(ValidationError, match="timeout 必须是正数"):
+            BEpusdtClient(api_url="https://test.example.com", api_token="test_token", timeout=timeout)
+
+    @pytest.mark.parametrize("max_retries", [-1, 1.5, "3", True])
+    def test_client_init_rejects_invalid_max_retries(self, max_retries):
+        """max_retries 必须是非负整数"""
+        with pytest.raises(ValidationError, match="max_retries 必须是非负整数"):
+            BEpusdtClient(api_url="https://test.example.com", api_token="test_token", max_retries=max_retries)
+
+    @pytest.mark.parametrize("retry_delay", [-1, "1", True])
+    def test_client_init_rejects_invalid_retry_delay(self, retry_delay):
+        """retry_delay 必须是非负数字"""
+        with pytest.raises(ValidationError, match="retry_delay 必须是非负数字"):
+            BEpusdtClient(api_url="https://test.example.com", api_token="test_token", retry_delay=retry_delay)
+
     @patch("bepusdt.client.requests.Session.post")
     def test_create_order_success(self, mock_post):
         """测试创建订单成功"""
@@ -40,7 +58,7 @@ class TestBEpusdtClient:
                 "order_id": "ORDER_001",
                 "amount": "10.0",
                 "actual_amount": "1.35",
-                "token": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+                "token": "test_payment_address",
                 "expiration_time": 600,
                 "payment_url": "https://test.example.com/pay/xxx",
             },
@@ -200,7 +218,7 @@ class TestBEpusdtClient:
                 "order_id": "ORDER_001",
                 "amount": "10.0",
                 "actual_amount": "1.35",
-                "token": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+                "token": "test_payment_address",
                 "expiration_time": 600,
                 "payment_url": "https://test.example.com/pay/xxx",
             },
@@ -498,6 +516,22 @@ class TestHTTPExceptionPaths:
             )
         assert "解析失败" in str(exc_info.value)
 
+    @patch("bepusdt.client.requests.Session.post")
+    def test_post_requests_json_decode_error_raises_parse_api_error(self, mock_post):
+        """真实 requests.JSONDecodeError 应归类为响应解析失败"""
+        response = self._mock_response(200, json_data={})
+        response.json.side_effect = requests.exceptions.JSONDecodeError("Expecting value", "", 0)
+        mock_post.return_value = response
+
+        with pytest.raises(APIError) as exc_info:
+            self.client.create_order(
+                order_id="ORDER_001",
+                amount=10.0,
+                notify_url="https://example.com/notify",
+            )
+
+        assert str(exc_info.value).startswith("响应解析失败:")
+
     # --- GET 路径 ---
 
     @patch("bepusdt.client.requests.Session.get")
@@ -537,6 +571,118 @@ class TestHTTPExceptionPaths:
         with pytest.raises(APIError) as exc_info:
             self.client.query_order(trade_id="test_trade_123")
         assert "解析失败" in str(exc_info.value)
+
+    @patch("bepusdt.client.requests.Session.get")
+    def test_get_requests_json_decode_error_raises_parse_api_error(self, mock_get):
+        """GET 路径真实 requests.JSONDecodeError 应归类为响应解析失败"""
+        response = self._mock_response(200, json_data={})
+        response.json.side_effect = requests.exceptions.JSONDecodeError("Expecting value", "", 0)
+        mock_get.return_value = response
+
+        with pytest.raises(APIError) as exc_info:
+            self.client.query_order(trade_id="test_trade_123")
+
+        assert str(exc_info.value).startswith("响应解析失败:")
+
+
+class TestClientRetrySemantics:
+    """测试客户端请求重试语义"""
+
+    def setup_method(self):
+        self.client = BEpusdtClient(
+            api_url="https://test.example.com",
+            api_token="test_token",
+            max_retries=2,
+            retry_delay=0,
+        )
+
+    def _success_response(self):
+        mock_resp = Mock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "status_code": 200,
+            "message": "success",
+            "data": {
+                "trade_id": "test_trade_123",
+                "order_id": "ORDER_001",
+                "amount": "10.0",
+                "actual_amount": "1.35",
+                "token": "test_payment_address",
+                "expiration_time": 600,
+                "payment_url": "https://test.example.com/pay/xxx",
+            },
+        }
+        return mock_resp
+
+    @patch("bepusdt.retry.time.sleep")
+    @patch("bepusdt.client.requests.Session.post")
+    def test_network_error_retries_until_success(self, mock_post, mock_sleep):
+        """网络错误应按配置重试并在后续成功时返回"""
+        mock_post.side_effect = [requests.exceptions.ConnectionError("断线"), self._success_response()]
+
+        order = self.client.create_order(
+            order_id="ORDER_001",
+            amount=10.0,
+            notify_url="https://example.com/notify",
+        )
+
+        assert order.trade_id == "test_trade_123"
+        assert mock_post.call_count == 2
+        mock_sleep.assert_called_once_with(0)
+
+    @patch("bepusdt.retry.time.sleep")
+    @patch("bepusdt.client.requests.Session.post")
+    def test_http_5xx_retries_until_success(self, mock_post, mock_sleep):
+        """HTTP 5xx 应按配置重试并在后续成功时返回"""
+        server_error = Mock()
+        server_error.status_code = 503
+        mock_post.side_effect = [server_error, self._success_response()]
+
+        order = self.client.create_order(
+            order_id="ORDER_001",
+            amount=10.0,
+            notify_url="https://example.com/notify",
+        )
+
+        assert order.trade_id == "test_trade_123"
+        assert mock_post.call_count == 2
+        mock_sleep.assert_called_once_with(0)
+
+    @patch("bepusdt.retry.time.sleep")
+    @patch("bepusdt.client.requests.Session.post")
+    def test_http_4xx_does_not_retry(self, mock_post, mock_sleep):
+        """HTTP 4xx 是不可重试错误，应立即抛出"""
+        client_error = Mock()
+        client_error.status_code = 400
+        mock_post.return_value = client_error
+
+        with pytest.raises(ClientError):
+            self.client.create_order(
+                order_id="ORDER_001",
+                amount=10.0,
+                notify_url="https://example.com/notify",
+            )
+
+        mock_post.assert_called_once()
+        mock_sleep.assert_not_called()
+
+    @patch("bepusdt.retry.time.sleep")
+    @patch("bepusdt.client.requests.Session.post")
+    def test_json_parse_error_does_not_retry(self, mock_post, mock_sleep):
+        """响应解析失败是 APIError，不应自动重试"""
+        response = self._success_response()
+        response.json.side_effect = requests.exceptions.JSONDecodeError("Expecting value", "", 0)
+        mock_post.return_value = response
+
+        with pytest.raises(APIError):
+            self.client.create_order(
+                order_id="ORDER_001",
+                amount=10.0,
+                notify_url="https://example.com/notify",
+            )
+
+        mock_post.assert_called_once()
+        mock_sleep.assert_not_called()
 
 
 class TestCreateOrderParamDetails:

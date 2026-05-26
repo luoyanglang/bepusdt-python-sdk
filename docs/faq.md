@@ -162,22 +162,27 @@ client = BEpusdtClient(
 
 # SDK 会自动重试以下错误：
 # - 网络连接失败 (NetworkError)
-# - 请求超时 (TimeoutError)
+# - 请求超时 (RequestTimeoutError / TimeoutError)
 # - 服务器错误 5xx (ServerError)
+#
+# 不会自动重试：
+# - 客户端错误 4xx (ClientError)
+# - 业务错误或响应解析失败 (APIError)
+# - 参数验证错误 (ValidationError)
 ```
 
 2. **手动重试**
 
 ```python
 import time
-from bepusdt.exceptions import ServerError, NetworkError, TimeoutError
+from bepusdt.exceptions import ServerError, NetworkError, RequestTimeoutError
 
 max_attempts = 3
 for attempt in range(max_attempts):
     try:
         order = client.create_order(...)
         break  # 成功则退出
-    except (ServerError, NetworkError, TimeoutError) as e:
+    except (ServerError, NetworkError, RequestTimeoutError) as e:
         if attempt < max_attempts - 1:
             wait_time = 2 ** attempt  # 指数退避：1s, 2s, 4s
             print(f"请求失败，{wait_time}秒后重试...")

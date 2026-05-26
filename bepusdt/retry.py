@@ -2,6 +2,7 @@
 
 import time
 import logging
+import math
 from functools import wraps
 from typing import Callable, Tuple, Type
 from .exceptions import NetworkError, RequestTimeoutError, ServerError
@@ -28,6 +29,17 @@ def retry_on_error(
         >>> def api_call():
         ...     return requests.get("https://api.example.com")
     """
+    if isinstance(max_retries, bool) or not isinstance(max_retries, int) or max_retries < 0:
+        raise ValueError("max_retries must be a non-negative integer")
+    if isinstance(delay, bool) or not isinstance(delay, (int, float)) or not math.isfinite(float(delay)) or delay < 0:
+        raise ValueError("delay must be a non-negative number")
+    if (
+        isinstance(backoff, bool)
+        or not isinstance(backoff, (int, float))
+        or not math.isfinite(float(backoff))
+        or backoff <= 0
+    ):
+        raise ValueError("backoff must be a positive number")
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)

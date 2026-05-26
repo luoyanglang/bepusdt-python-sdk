@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.13] - 2026-05-26
+
+### Fixed
+- 修正 `requests.exceptions.JSONDecodeError` 的错误分类；响应 JSON 解析失败现在稳定抛出 `APIError("响应解析失败: ...")`，不再被误归类为底层请求失败。
+- `BEpusdtClient` 初始化现在会校验 `timeout`、`max_retries` 和 `retry_delay`，避免无效重试或超时配置进入请求层。
+- `retry_on_error()` 现在会拒绝无效的 `max_retries`、`delay` 和 `backoff` 参数，避免负重试次数导致目标函数不执行。
+
+### Tests
+- 补充客户端重试语义回归测试，覆盖网络错误、请求超时、HTTP 5xx、HTTP 4xx 和 JSON 解析失败。
+- 补充初始化参数和重试装饰器参数校验测试。
+
+### Docs
+- 明确自动重试只覆盖 `NetworkError`、`RequestTimeoutError` / `TimeoutError` 和 `ServerError`。
+- 明确 `ClientError`、`APIError`、`ValidationError` 和响应解析失败不会自动重试。
+
 ## [0.3.12] - 2026-05-25
 
 ### Fixed
@@ -215,6 +230,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复 amount 参数类型导致的签名错误
 - 优化签名算法，正确处理空值
 
+[0.3.13]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.13
 [0.3.12]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.12
 [0.3.11]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.11
 [0.3.10]: https://github.com/luoyanglang/bepusdt-python-sdk/releases/tag/v0.3.10

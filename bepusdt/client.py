@@ -36,6 +36,34 @@ def _validate_timeout(timeout: int) -> int:
     return timeout
 
 
+def _validate_request_timeout(timeout: Union[int, float]) -> Union[int, float]:
+    if (
+        isinstance(timeout, bool)
+        or not isinstance(timeout, (int, float))
+        or not math.isfinite(float(timeout))
+        or timeout <= 0
+    ):
+        raise ValidationError(f"timeout 必须是正数，当前值: {timeout!r}")
+    return timeout
+
+
+def _validate_max_retries(max_retries: int) -> int:
+    if isinstance(max_retries, bool) or not isinstance(max_retries, int) or max_retries < 0:
+        raise ValidationError(f"max_retries 必须是非负整数，当前值: {max_retries!r}")
+    return max_retries
+
+
+def _validate_retry_delay(retry_delay: Union[int, float]) -> Union[int, float]:
+    if (
+        isinstance(retry_delay, bool)
+        or not isinstance(retry_delay, (int, float))
+        or not math.isfinite(float(retry_delay))
+        or retry_delay < 0
+    ):
+        raise ValidationError(f"retry_delay 必须是非负数字，当前值: {retry_delay!r}")
+    return retry_delay
+
+
 class BEpusdtClient:
     """BEpusdt 支付网关客户端
 
@@ -64,9 +92,9 @@ class BEpusdtClient:
             raise ValidationError(f"api_url 必须使用 HTTPS 协议（以 https:// 开头），当前值: {api_url!r}")
         self.api_url = api_url.rstrip("/")
         self.api_token = api_token
-        self.timeout = timeout
-        self.max_retries = max_retries
-        self.retry_delay = retry_delay
+        self.timeout = _validate_request_timeout(timeout)
+        self.max_retries = _validate_max_retries(max_retries)
+        self.retry_delay = _validate_retry_delay(retry_delay)
         self.session = requests.Session()
 
         from . import __version__, __url__
@@ -363,10 +391,12 @@ class BEpusdtClient:
                 raise RequestTimeoutError(f"请求超时: {str(e)}")
             except requests.exceptions.ConnectionError as e:
                 raise NetworkError(f"网络连接失败: {str(e)}")
-            except requests.exceptions.RequestException as e:
-                raise APIError(f"请求失败: {str(e)}")
+            except requests.exceptions.JSONDecodeError as e:
+                raise APIError(f"响应解析失败: {str(e)}")
             except ValueError as e:
                 raise APIError(f"响应解析失败: {str(e)}")
+            except requests.exceptions.RequestException as e:
+                raise APIError(f"请求失败: {str(e)}")
 
         return _do_request()
 

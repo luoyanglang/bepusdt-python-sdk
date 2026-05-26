@@ -100,3 +100,21 @@ def test_max_retries_zero_calls_function_exactly_once():
 
     mock_func.assert_called_once()
     mock_sleep.assert_not_called()
+
+
+def test_retry_rejects_negative_max_retries():
+    """max_retries 不允许为负数，避免装饰器不调用目标函数"""
+    with pytest.raises(ValueError, match="max_retries must be a non-negative integer"):
+        retry_on_error(max_retries=-1)
+
+
+def test_retry_rejects_non_numeric_delay():
+    """delay 必须是非负数字"""
+    with pytest.raises(ValueError, match="delay must be a non-negative number"):
+        retry_on_error(delay="1")
+
+
+def test_retry_rejects_non_positive_backoff():
+    """backoff 必须是正数"""
+    with pytest.raises(ValueError, match="backoff must be a positive number"):
+        retry_on_error(backoff=0)

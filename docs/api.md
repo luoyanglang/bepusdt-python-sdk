@@ -36,16 +36,16 @@ client = BEpusdtClient(
 **参数：**
 - `api_url` (str): BEpusdt 服务器地址
 - `api_token` (str): API 认证 Token
-- `timeout` (int, 可选): 请求超时时间，默认 30 秒
-- `max_retries` (int, 可选): 最大重试次数，默认 3 次
-- `retry_delay` (float, 可选): 初始重试延迟（秒），默认 1.0 秒（指数退避：1s, 2s, 4s）
+- `timeout` (int | float, 可选): 请求超时时间，必须为正数，默认 30 秒
+- `max_retries` (int, 可选): 最大重试次数，必须为非负整数，默认 3 次
+- `retry_delay` (int | float, 可选): 初始重试延迟（秒），必须为非负数字，默认 1.0 秒（指数退避：1s, 2s, 4s）
 
 **重试机制：**
 - 网络连接失败 (`NetworkError`) - 自动重试
-- 请求超时 (`TimeoutError`) - 自动重试
+- 请求超时 (`RequestTimeoutError` / `TimeoutError`) - 自动重试
 - 服务器错误 5xx (`ServerError`) - 自动重试
 - 客户端错误 4xx (`ClientError`) - 不重试
-- 其他错误 - 不重试
+- 业务错误、响应解析失败、参数验证失败 (`APIError` / `ValidationError`) - 不重试
 
 ---
 
@@ -290,9 +290,11 @@ SDK 基础异常类，所有其他异常的父类。
 - 连接被拒绝
 - 网络不可达
 
-### TimeoutError
+### RequestTimeoutError / TimeoutError
 
 请求超时（可重试）。
+
+`TimeoutError` 是 `RequestTimeoutError` 的向后兼容别名。
 
 **使用场景：**
 - 连接超时
@@ -339,7 +341,7 @@ SDK 基础异常类，所有其他异常的父类。
 ```python
 from bepusdt import (
     BEpusdtClient, 
-    NetworkError, TimeoutError, ServerError, ClientError
+    NetworkError, RequestTimeoutError, ServerError, ClientError, APIError
 )
 
 client = BEpusdtClient(
@@ -360,7 +362,7 @@ except NetworkError as e:
     # 网络连接失败（已重试 3 次）
     print(f"❌ 网络错误: {e}")
     
-except TimeoutError as e:
+except RequestTimeoutError as e:
     # 请求超时（已重试 3 次）
     print(f"❌ 超时: {e}")
     
@@ -371,6 +373,10 @@ except ServerError as e:
 except ClientError as e:
     # 客户端错误（不会重试）
     print(f"❌ 请求错误 {e.status_code}: {e}")
+
+except APIError as e:
+    # 业务错误或响应解析失败（不会重试）
+    print(f"❌ API 错误: {e}")
     
 except Exception as e:
     # 其他错误

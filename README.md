@@ -110,7 +110,7 @@ print(f"🔗 支付链接: {order.payment_url}")
 SDK 会自动处理网络错误和服务器临时故障：
 
 ```python
-from bepusdt.exceptions import ServerError, NetworkError, TimeoutError
+from bepusdt.exceptions import ServerError, NetworkError, RequestTimeoutError, APIError
 
 try:
     order = client.create_order(...)
@@ -120,9 +120,12 @@ except ServerError as e:
 except NetworkError as e:
     # 网络连接失败（已自动重试）
     print(f"网络错误: {e}")
-except TimeoutError as e:
+except RequestTimeoutError as e:
     # 请求超时（已自动重试）
     print(f"超时: {e}")
+except APIError as e:
+    # 业务错误或响应解析失败（不会自动重试）
+    print(f"API 错误: {e}")
 ```
 
 **自动重试配置：**
@@ -134,6 +137,9 @@ client = BEpusdtClient(
     retry_delay=1.0     # 初始延迟 1 秒（指数退避）
 )
 ```
+
+自动重试只覆盖 `NetworkError`、`RequestTimeoutError` / `TimeoutError` 和
+`ServerError`；`ClientError`、`APIError`、`ValidationError` 不会自动重试。
 
 ### 创建订单
 
