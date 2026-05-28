@@ -1,15 +1,13 @@
 [build-system]
-requires = ["setuptools>=77", "wheel", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "bepusdt"
-dynamic = ["version"]
+dynamic = ["version", "license"]
 description = "BEpusdt 支付网关 Python SDK - 支持 USDT/TRX/USDC 多链支付"
 readme = "README.md"
 requires-python = ">=3.7"
-license = "MIT"
-license-files = ["LICENSE"]
 authors = [
     {name = "luoyanglang", email = "luoyanglang@users.noreply.github.com"}
 ]

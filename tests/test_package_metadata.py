@@ -50,7 +50,6 @@ def test_build_uses_setuptools_scm_version(tmp_path):
     assert "License classifiers are deprecated" not in result.stderr
 
     parsed_metadata = Parser().parsestr(metadata)
-    assert parsed_metadata["License-Expression"] == "MIT"
-    assert parsed_metadata["License"] is None
+    assert parsed_metadata["License"] == "MIT"
     assert "LICENSE" in parsed_metadata.get_all("License-File", [])
     assert "License :: OSI Approved :: MIT License" not in parsed_metadata.get_all("Classifier", [])
