@@ -13,7 +13,7 @@ pip install bepusdt[qrcode]
 
 ## 兼容性
 
-- 当前已验证的 BEpusdt 网关基线：官方上游 `v1.23.6-4-g1e52ee2`。
+- 当前已验证的 BEpusdt 网关基线：官方上游 `v1.23.6-7-gc659103`。
 - SDK 包 metadata 仍允许 Python 3.7+；当前 CI 持续验证 Python 3.8 至
   3.12。
 

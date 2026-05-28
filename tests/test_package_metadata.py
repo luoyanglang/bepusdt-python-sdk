@@ -1,5 +1,6 @@
 """打包元数据测试"""
 
+from email.parser import Parser
 import os
 import shutil
 import subprocess
@@ -45,3 +46,11 @@ def test_build_uses_setuptools_scm_version(tmp_path):
 
     assert not any(name.startswith("build/") for name in wheel_files)
     assert "Version: 9.8.7" in metadata
+    assert "project.license as a TOML table is deprecated" not in result.stderr
+    assert "License classifiers are deprecated" not in result.stderr
+
+    parsed_metadata = Parser().parsestr(metadata)
+    assert parsed_metadata["License-Expression"] == "MIT"
+    assert parsed_metadata["License"] is None
+    assert "LICENSE" in parsed_metadata.get_all("License-File", [])
+    assert "License :: OSI Approved :: MIT License" not in parsed_metadata.get_all("Classifier", [])

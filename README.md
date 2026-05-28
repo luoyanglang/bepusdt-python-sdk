@@ -51,7 +51,7 @@ pip install bepusdt[qrcode]
 
 ## 🔖 兼容性
 
-- 当前已验证的 BEpusdt 网关基线：官方上游 `v1.23.6-4-g1e52ee2`。
+- 当前已验证的 BEpusdt 网关基线：官方上游 `v1.23.6-7-gc659103`。
 - SDK 包 metadata 仍允许 Python 3.7+；当前 CI 持续验证 Python 3.8 至
   3.12。Python 3.7 已进入生命周期末期，最低版本调整会作为兼容性边界单独规划。
 
@@ -101,7 +101,6 @@ print(f"🔗 支付链接: {order.payment_url}")
 - 📖 [API 参考](./docs/api.md)
 - 💡 [使用示例](./docs/examples.md)
 - ❓ [常见问题](./docs/faq.md)
-- 🧰 [发布维护说明](./docs/release.md)
 
 ## 🔧 核心功能
 

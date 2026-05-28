@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.14] - 2026-05-28
+
+### Fixed
+- 更新包许可证元数据，兼容新版 Python 打包工具链，避免构建时出现许可证元数据弃用警告。
+
+### Tests
+- 补充发布包元数据回归测试，确保 wheel 版本、许可证声明和包内容保持稳定。
+
+### Docs
+- 更新已验证的 BEpusdt 网关兼容基线。
+- 调整公开文档内容边界，保留面向 SDK 用户的安装、API、示例和 FAQ 文档。
+
+### CI
+- 更新 PyPI 发布认证方式，减少长期发布凭据在自动化流程中的使用。
+
 ## [0.3.13] - 2026-05-26
 
 ### Fixed
