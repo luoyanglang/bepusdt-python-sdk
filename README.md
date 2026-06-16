@@ -13,14 +13,14 @@
 
 ## 🪧 介绍
 
-BEpusdt 支付网关的 Python SDK，让 Python 开发者能够快速集成 USDT/TRX/USDC 加密货币支付功能。
+BEpusdt 支付网关的 Python SDK，让 Python 开发者能够快速集成 USDT/USDC/TRX/ETH/BNB/GRAM 加密货币支付功能。
 
 ## ✨ 特性
 
 - 🎯 **简单易用** - 几行代码即可集成
 - 🔐 **自动签名** - 内置签名生成和验证
 - 🌐 **多链支持** - 支持 10+ 区块链网络
-- 💰 **多币种** - USDT、USDC、TRX、ETH、BNB
+- 💰 **多币种** - USDT、USDC、TRX、ETH、BNB、GRAM
 - 🔄 **自动重试** - 网络错误自动重试，提升成功率
 - 📱 **二维码生成** - 一键生成收款地址二维码
 - 📝 **类型提示** - 完整的 IDE 智能提示
@@ -31,14 +31,14 @@ BEpusdt 支付网关的 Python SDK，让 Python 开发者能够快速集成 USDT
 
 ### USDT
 🔥 主流网络：Tron (TRC20) · Ethereum (ERC20) · BSC (BEP20) · Polygon  
-⚡ 其他网络：Arbitrum · Solana · Aptos · X-Layer · Plasma
+⚡ 其他网络：Arbitrum · Solana · Aptos · X-Layer · Plasma · TON
 
 ### USDC  
 🔥 主流网络：Tron (TRC20) · Ethereum (ERC20) · BSC (BEP20) · Polygon  
 ⚡ 其他网络：Arbitrum · Solana · Aptos · X-Layer · Base
 
 ### 其他
-💎 TRX (Tron) · ETH (Ethereum) · BNB (BSC)
+💎 TRX (Tron) · ETH (Ethereum) · BNB (BSC) · GRAM (TON)
 
 ## 📦 安装
 
@@ -51,7 +51,7 @@ pip install bepusdt[qrcode]
 
 ## 🔖 兼容性
 
-- 当前已验证的 BEpusdt 网关基线：官方上游 `v1.23.6-7-gc659103`。
+- 当前已验证的 BEpusdt 网关基线：官方上游 main commit f4bdee1，最近正式 tag 为 v1.23.6。
 - SDK 包 metadata 仍允许 Python 3.7+；当前 CI 持续验证 Python 3.8 至
   3.12。Python 3.7 已进入生命周期末期，最低版本调整会作为兼容性边界单独规划。
 

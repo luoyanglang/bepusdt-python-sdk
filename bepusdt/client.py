@@ -127,10 +127,11 @@ class BEpusdtClient:
             trade_type: 支付类型，默认 "usdt.trc20"
                 支持的类型：
                 - USDT: usdt.trc20, usdt.erc20, usdt.polygon, usdt.bep20,
-                        usdt.aptos, usdt.solana, usdt.xlayer, usdt.arbitrum, usdt.plasma
+                        usdt.aptos, usdt.solana, usdt.xlayer, usdt.arbitrum,
+                        usdt.plasma, usdt.ton
                 - USDC: usdc.trc20, usdc.erc20, usdc.polygon, usdc.bep20,
                         usdc.aptos, usdc.solana, usdc.xlayer, usdc.arbitrum, usdc.base
-                - 原生代币: tron.trx, ethereum.eth, bsc.bnb
+                - 原生代币: tron.trx, ethereum.eth, bsc.bnb, ton.gram
             timeout: 订单超时时间（秒，可选）；当前 Go 网关采用 180-3600，
                 传 0 或越界值时使用网关配置默认值
             rate: 自定义汇率（可选），支持数字或特殊前缀字符串；数字会按
@@ -306,7 +307,7 @@ class BEpusdtClient:
                 - trade_id: BEpusdt 交易ID
                 - order_id: 商户订单号
                 - amount: 请求金额（CNY）
-                - actual_amount: 实际支付金额（USDT/TRX/USDC）
+                - actual_amount: 实际支付金额（USDT/USDC/TRX/ETH/BNB/GRAM）
                 - token: 收款地址
                 - block_transaction_id: 区块链交易ID
                 - status: 订单状态（1=等待支付, 2=支付成功, 3=支付超时）

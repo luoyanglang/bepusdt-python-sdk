@@ -50,6 +50,7 @@ class TradeType(str, Enum):
     USDT_XLAYER = "usdt.xlayer"  # X-Layer 网络
     USDT_ARBITRUM = "usdt.arbitrum"  # Arbitrum-One 网络
     USDT_PLASMA = "usdt.plasma"  # Plasma 网络
+    USDT_TON = "usdt.ton"  # TON 网络
 
     # USDC
     USDC_TRC20 = "usdc.trc20"  # Tron 网络
@@ -66,6 +67,7 @@ class TradeType(str, Enum):
     TRON_TRX = "tron.trx"  # TRX (Tron 网络)
     ETH_ERC20 = "ethereum.eth"  # ETH (Ethereum 网络)
     BNB_BEP20 = "bsc.bnb"  # BNB (BSC 网络)
+    TON_GRAM = "ton.gram"  # GRAM (TON 网络)
 
 
 @dataclass

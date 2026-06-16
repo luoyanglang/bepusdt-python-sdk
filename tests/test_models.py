@@ -122,8 +122,8 @@ class TestOrderStatus:
 class TestTradeType:
     """支付类型枚举测试"""
 
-    def test_all_21_usdt_constants(self):
-        """验证全部 9 个 USDT 常量值"""
+    def test_all_usdt_constants(self):
+        """验证全部 10 个 USDT 常量值"""
         assert TradeType.USDT_TRC20 == "usdt.trc20"
         assert TradeType.USDT_ERC20 == "usdt.erc20"
         assert TradeType.USDT_POLYGON == "usdt.polygon"
@@ -133,8 +133,9 @@ class TestTradeType:
         assert TradeType.USDT_XLAYER == "usdt.xlayer"
         assert TradeType.USDT_ARBITRUM == "usdt.arbitrum"
         assert TradeType.USDT_PLASMA == "usdt.plasma"
+        assert TradeType.USDT_TON == "usdt.ton"
 
-    def test_all_21_usdc_constants(self):
+    def test_all_usdc_constants(self):
         """验证全部 9 个 USDC 常量值"""
         assert TradeType.USDC_TRC20 == "usdc.trc20"
         assert TradeType.USDC_ERC20 == "usdc.erc20"
@@ -146,15 +147,16 @@ class TestTradeType:
         assert TradeType.USDC_ARBITRUM == "usdc.arbitrum"
         assert TradeType.USDC_BASE == "usdc.base"
 
-    def test_all_21_native_token_constants(self):
-        """验证全部 3 个原生代币常量值"""
+    def test_all_native_token_constants(self):
+        """验证全部 4 个原生代币常量值"""
         assert TradeType.TRON_TRX == "tron.trx"
         assert TradeType.ETH_ERC20 == "ethereum.eth"
         assert TradeType.BNB_BEP20 == "bsc.bnb"
+        assert TradeType.TON_GRAM == "ton.gram"
 
     def test_enum_total_count(self):
-        """验证枚举成员总数为 21"""
-        assert len(list(TradeType)) == 21
+        """验证枚举成员总数为 23"""
+        assert len(list(TradeType)) == 23
 
     def test_values_match_gateway_trade_type_contract(self):
         """SDK TradeType 应与当前 Go 网关交易类型契约一致"""
@@ -168,6 +170,7 @@ class TestTradeType:
             "usdt.xlayer",
             "usdt.arbitrum",
             "usdt.plasma",
+            "usdt.ton",
             "usdc.trc20",
             "usdc.erc20",
             "usdc.polygon",
@@ -180,6 +183,7 @@ class TestTradeType:
             "tron.trx",
             "ethereum.eth",
             "bsc.bnb",
+            "ton.gram",
         }
 
     def test_string_comparison(self):
@@ -193,6 +197,8 @@ class TestTradeType:
         assert TradeType("usdt.trc20") is TradeType.USDT_TRC20
         assert TradeType("usdc.base") is TradeType.USDC_BASE
         assert TradeType("bsc.bnb") is TradeType.BNB_BEP20
+        assert TradeType("usdt.ton") is TradeType.USDT_TON
+        assert TradeType("ton.gram") is TradeType.TON_GRAM
 
     def test_invalid_value_raises(self):
         """非法值抛出 ValueError"""
@@ -202,7 +208,7 @@ class TestTradeType:
     def test_iterable(self):
         """枚举可迭代，所有成员均为 str 实例"""
         members = list(TradeType)
-        assert len(members) == 21
+        assert len(members) == 23
         for member in members:
             assert isinstance(member, str)
 

@@ -13,7 +13,7 @@ pip install bepusdt[qrcode]
 
 ## 兼容性
 
-- 当前已验证的 BEpusdt 网关基线：官方上游 `v1.23.6-7-gc659103`。
+- 当前已验证的 BEpusdt 网关基线：官方上游 main commit f4bdee1，最近正式 tag 为 v1.23.6。
 - SDK 包 metadata 仍允许 Python 3.7+；当前 CI 持续验证 Python 3.8 至
   3.12。
 
@@ -86,7 +86,7 @@ order = client.create_order(
 
 **重要说明：**
 - `amount` 参数是**人民币金额**，系统会根据汇率自动计算加密货币数量
-- 返回的 `order.actual_amount` 是**实际需要支付的加密货币数量**（USDT/TRX/USDC）
+- 返回的 `order.actual_amount` 是**实际需要支付的加密货币数量**（USDT/USDC/TRX/ETH/BNB/GRAM）
 - 例如：`amount=10.0` (10元人民币) → `actual_amount=1.35` (1.35 USDT)
 
 **异常：** `APIError`
@@ -106,6 +106,7 @@ TradeType.USDT_SOLANA     # Solana
 TradeType.USDT_APTOS      # Aptos
 TradeType.USDT_XLAYER     # X-Layer
 TradeType.USDT_PLASMA     # Plasma
+TradeType.USDT_TON        # TON
 
 # USDC
 TradeType.USDC_TRC20      # Tron
@@ -122,6 +123,7 @@ TradeType.USDC_BASE       # Base
 TradeType.TRON_TRX        # TRX
 TradeType.ETH_ERC20       # ETH (Ethereum)
 TradeType.BNB_BEP20       # BNB (BSC)
+TradeType.TON_GRAM        # GRAM (TON)
 ```
 
 ### 自定义汇率格式
@@ -235,7 +237,7 @@ is_valid = client.verify_callback(callback_data)
 - `trade_id` (str): BEpusdt 交易ID
 - `order_id` (str): 商户订单号
 - `amount` (float): 请求金额（法币）
-- `actual_amount` (float): 实际支付金额（**加密货币 USDT/TRX/USDC/ETH/BNB**）⭐
+- `actual_amount` (float): 实际支付金额（**加密货币 USDT/USDC/TRX/ETH/BNB/GRAM**）⭐
 - `token` (str): 收款地址
 - `expiration_time` (int): 过期时间（秒）
 - `payment_url` (str): 支付链接

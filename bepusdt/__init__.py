@@ -1,4 +1,4 @@
-"""BEpusdt Python SDK - USDT/TRX/USDC 支付网关客户端"""
+"""BEpusdt Python SDK - USDT/USDC/TRX/ETH/BNB/GRAM 支付网关客户端"""
 
 from .client import BEpusdtClient
 from .exceptions import (

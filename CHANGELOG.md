@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.15] - 2026-06-16
+
+### Fixed
+- 补充 `TradeType.USDT_TON` 和 `TradeType.TON_GRAM`，对齐官方 BEpusdt Go 网关新增的 TON 网络支付类型。
+
+### Tests
+- 更新支付类型契约测试，确认 SDK `TradeType` 与当前 BEpusdt 网关支持的 23 个交易类型一致。
+
+### Docs
+- 更新已验证的 BEpusdt 网关基线：官方上游 main commit f4bdee1，最近正式 tag 为 v1.23.6。
+- 同步 README、API 和 FAQ 中的支持币种与支付类型说明。
+
 ## [0.3.14] - 2026-05-28
 
 ### Fixed

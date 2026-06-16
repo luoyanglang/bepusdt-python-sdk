@@ -29,7 +29,7 @@ pip install -e .
 **重要概念：**
 
 - `amount` - 订单金额（**人民币 CNY**）
-- `actual_amount` - 实际支付金额（**加密货币 USDT/TRX/USDC**）
+- `actual_amount` - 实际支付金额（**加密货币 USDT/USDC/TRX/ETH/BNB/GRAM**）
 
 **示例：**
 ```python
