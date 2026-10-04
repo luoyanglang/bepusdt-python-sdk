@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -16,7 +17,31 @@ def test_actual_gateway_signature(case):
     params = json.loads(case["json"])
     assert generate_signature(params, GOLDENS["token"]) == case["signature"]
     assert verify_signature(params, GOLDENS["token"], case["signature"])
+    client = BEpusdtClient("https://gateway.example", GOLDENS["token"])
+    assert client.verify_callback(dict(params, signature=case["signature"]))
     assert not verify_signature(dict(params, name="tampered"), GOLDENS["token"], case["signature"])
+
+
+def test_create_keeps_trailing_url_text_and_gateway_signature():
+    case = next(case for case in GOLDENS["cases"] if json.loads(case["json"]).get("trade_type") == "")
+    params = json.loads(case["json"])
+    body = {
+        "status_code": 200,
+        "data": dict(
+            trade_id="fixture-trade",
+            order_id="fixture-order",
+            amount="10",
+            actual_amount="1.35",
+            token="fixture-wallet",
+            expiration_time=1200,
+            payment_url="https://gateway.example/pay",
+        ),
+    }
+    client = BEpusdtClient("https://gateway.example", GOLDENS["token"])
+    with patch.object(client.session, "post", return_value=Mock(status_code=200, json=lambda: body)) as post:
+        client.create_order("fixture-order", 10, params["notify_url"], trade_type="")
+    assert post.call_count == 1
+    assert post.call_args.kwargs["json"] == dict(params, signature=case["signature"])
 
 
 @pytest.mark.parametrize("signature", ["非ASCII", None, [], 123, "", "0" * 32])

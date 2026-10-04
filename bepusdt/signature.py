@@ -61,7 +61,8 @@ def generate_signature(params: Dict[str, Any], api_token: str) -> str:
     sorted_params = sorted(filtered.items())
 
     # 拼接参数
-    param_str = "&".join([f"{k}={_signature_value(v)}" for k, v in sorted_params])
+    # Go trims every trailing '&', including suffixes of the final included value.
+    param_str = "&".join([f"{k}={_signature_value(v)}" for k, v in sorted_params]).rstrip("&")
 
     # 添加 token 并计算 MD5
     sign_str = param_str + api_token

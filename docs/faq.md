@@ -334,6 +334,9 @@ assert verify_signature(params, api_token, signature)
 
 例如 `1000000.0` 在网关签名文本中是 `1e+06`，不是 Python 的 `1000000.0`。回调验签请使用 `client.verify_callback()`；勿输出真实 Token、Token 拼接文本或原始签名。
 
+签名拼接文本按 Go 规则裁剪所有末尾 `&`，包括最后有效字段值的后缀。
+请求字段原文不变；内部或非末字段的 `&` 保留。空串和 None 字段仍按协议省略。
+
 ### Q: 未收到回调通知
 
 可能原因：

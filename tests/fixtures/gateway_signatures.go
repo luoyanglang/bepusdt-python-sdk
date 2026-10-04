@@ -19,6 +19,10 @@ func main() {
         `{"name":"测试商品","rate":"~1.02","trade_type":"usdt.trc20"}`,
         `{"order_id":"fixture-order","amount":10,"notify_url":"https://merchant.example/notify","redirect_url":"https://merchant.example/notify","trade_type":"usdt.trc20","timeout":1000000}`,
         `{"trade_id":"fixture-trade","order_id":"fixture-order","amount":10.0,"actual_amount":"1.35","token":"fixture-wallet","status":2,"block_transaction_id":"fixture-hash"}`,
+        `{"name":"fixture&"}`, `{"name":"fixture&&"}`, `{"trade_id":"fixture&"}`,
+        `{"name":"fixture&","z":"last"}`, `{"name":"fixture&","z":""}`,
+        `{"name":"fixture&","z":null}`, `{"name":"fixture & value"}`,
+        `{"order_id":"fixture-order","amount":10,"notify_url":"https://merchant.example/notify?source=fixture&","redirect_url":"https://merchant.example/notify?source=fixture&","trade_type":""}`,
     }
     r := rand.New(rand.NewSource(20261004))
     for i := 0; i < 128; i++ {

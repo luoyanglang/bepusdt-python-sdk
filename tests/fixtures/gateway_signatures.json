@@ -69,6 +69,38 @@
       "signature": "5fecfc2162dc745d2347f5498d09dbcf"
     },
     {
+      "json": "{\"name\":\"fixture\u0026\"}",
+      "signature": "4f0f47a3d6c935fcb14cd92cedf75af0"
+    },
+    {
+      "json": "{\"name\":\"fixture\u0026\u0026\"}",
+      "signature": "4f0f47a3d6c935fcb14cd92cedf75af0"
+    },
+    {
+      "json": "{\"trade_id\":\"fixture\u0026\"}",
+      "signature": "61254c3f565e421a69ae69b31dce9576"
+    },
+    {
+      "json": "{\"name\":\"fixture\u0026\",\"z\":\"last\"}",
+      "signature": "4bb641057a07bb581139a285b99a1654"
+    },
+    {
+      "json": "{\"name\":\"fixture\u0026\",\"z\":\"\"}",
+      "signature": "4f0f47a3d6c935fcb14cd92cedf75af0"
+    },
+    {
+      "json": "{\"name\":\"fixture\u0026\",\"z\":null}",
+      "signature": "4f0f47a3d6c935fcb14cd92cedf75af0"
+    },
+    {
+      "json": "{\"name\":\"fixture \u0026 value\"}",
+      "signature": "2d1281e51e7cca9015c92f083677cfd8"
+    },
+    {
+      "json": "{\"order_id\":\"fixture-order\",\"amount\":10,\"notify_url\":\"https://merchant.example/notify?source=fixture\u0026\",\"redirect_url\":\"https://merchant.example/notify?source=fixture\u0026\",\"trade_type\":\"\"}",
+      "signature": "246a1516afc6e4cb2da3545d5beab872"
+    },
+    {
       "json": "{\"amount\":0.037559049269590965}",
       "signature": "64cc059fc53127eaa3ff5d938e4ab178"
     },
