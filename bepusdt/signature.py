@@ -2,15 +2,40 @@
 
 import hashlib
 import hmac
+import math
+from decimal import Decimal
 from enum import Enum
 from typing import Dict, Any
+from .exceptions import ValidationError
 
 
-def _signature_value(value: Any) -> Any:
-    """返回签名协议实际传输的值"""
+def _signature_value(value: Any) -> str:
+    """Match Go %v after the gateway decodes JSON numbers into float64."""
     if isinstance(value, Enum):
-        return value.value
-    return value
+        value = value.value
+    if isinstance(value, str):
+        return value
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if not isinstance(value, (int, float)):
+        raise ValidationError("签名仅支持 JSON 标量参数")
+    try:
+        number = float(value)
+    except OverflowError:
+        raise ValidationError("签名数字超出 float64 范围") from None
+    if not math.isfinite(number):
+        raise ValidationError("签名数字必须有限")
+    if number == 0:
+        return "-0" if math.copysign(1, number) < 0 else "0"
+    decimal = Decimal(repr(number))
+    if -4 <= decimal.adjusted() < 6:
+        text = format(decimal, "f")
+        return text.rstrip("0").rstrip(".") if "." in text else text
+    mantissa, exponent = format(decimal, "e").split("e")
+    if "." in mantissa:
+        mantissa = mantissa.rstrip("0").rstrip(".")
+    exponent = int(exponent)
+    return "{}e{}{:02d}".format(mantissa, "+" if exponent >= 0 else "-", abs(exponent))
 
 
 def generate_signature(params: Dict[str, Any], api_token: str) -> str:
@@ -27,8 +52,10 @@ def generate_signature(params: Dict[str, Any], api_token: str) -> str:
         >>> params = {"order_id": "001", "amount": 10}
         >>> signature = generate_signature(params, "your-token")
     """
-    # 过滤空值
-    filtered = {k: v for k, v in params.items() if v not in (None, "", [])}
+    if not isinstance(params, dict) or any(not isinstance(key, str) for key in params):
+        raise ValidationError("签名参数必须是字符串键的字典")
+    # The gateway excludes signature itself; retain the historical empty-list omission.
+    filtered = {k: v for k, v in params.items() if k != "signature" and v not in (None, "", [])}
 
     # 按键排序
     sorted_params = sorted(filtered.items())
@@ -39,7 +66,11 @@ def generate_signature(params: Dict[str, Any], api_token: str) -> str:
     # 添加 token 并计算 MD5
     sign_str = param_str + api_token
     # BEpusdt gateway protocol requires token-appended MD5 signatures.
-    signature = hashlib.md5(sign_str.encode("utf-8")).hexdigest().lower()  # nosemgrep
+    try:
+        encoded = sign_str.encode("utf-8")
+    except UnicodeEncodeError:
+        raise ValidationError("签名文本必须是有效 UTF-8") from None
+    signature = hashlib.md5(encoded).hexdigest().lower()  # nosemgrep
 
     return signature
 
@@ -59,6 +90,11 @@ def verify_signature(params: Dict[str, Any], api_token: str, received_signature:
         >>> params = {"order_id": "001", "amount": 10}
         >>> is_valid = verify_signature(params, "your-token", "xxx")
     """
-    expected_signature = generate_signature(params, api_token)
+    if not isinstance(received_signature, str) or not received_signature.isascii():
+        return False
+    try:
+        expected_signature = generate_signature(params, api_token)
+    except ValidationError:
+        return False
     # 使用常数时间比较，防止时序攻击（timing attack）
     return hmac.compare_digest(expected_signature, received_signature)

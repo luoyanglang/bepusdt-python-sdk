@@ -13,7 +13,9 @@ pip install bepusdt[qrcode]
 
 ## 兼容性
 
-- 当前已验证的 BEpusdt 网关基线：官方上游 main commit f4bdee1，最近正式 tag 为 v1.23.6。
+- 历史旧模式基线 f4bdee1 / v1.23.6；显式 current 模式对照官方 aa3bd50。
+- 本阶段覆盖商户创建/查询/取消与验签，收银台新增接口留待后续；完整支持表见 [README](../README.md#-兼容性)。本批验证为离线契约测试，不是链上付款或浏览器验收。
+- 请求金额仍使用 int/float，上游 JSON 解码为 float64；超过其精度的整数或小数不能保持原始请求精度。金额文本属性保留的是响应值，不是上游不存在的任意精度请求协议。
 - SDK 包 metadata 仍允许 Python 3.7+；当前 CI 持续验证 Python 3.8 至
   3.12。
 
@@ -39,6 +41,7 @@ client = BEpusdtClient(
 - `timeout` (int | float, 可选): 请求超时时间，必须为正数，默认 30 秒
 - `max_retries` (int, 可选): 最大重试次数，必须为非负整数，默认 3 次
 - `retry_delay` (int | float, 可选): 初始重试延迟（秒），必须为非负数字，默认 1.0 秒（指数退避：1s, 2s, 4s）
+- `query_mode` (str, 仅关键字): `legacy`（默认旧 GET）或 `current`（新版 POST Info）；无自动探测/回退。
 
 **重试机制：**
 - 网络连接失败 (`NetworkError`) - 自动重试
@@ -167,12 +170,16 @@ order = client.query_order(trade_id="xxx")
 
 **注意：**
 - 此接口不需要签名验证
-- 上游返回的 `trade_hash` 会映射为 `Order.block_transaction_id`
-- 如果兼容网关返回 `block_transaction_id`，SDK 也会映射为同一属性
-- 返回的 Order 对象中，只有 `trade_id`、`status`、`block_transaction_id` 字段有效
-- 其他字段为默认值
+- legacy 的 `trade_hash` / `block_transaction_id` 映射为 `Order.block_transaction_id`；仅 trade_id/status/hash 有效，其他字段保持历史默认值。
+- current 发送 `{"trade_id": "..."}` 至 `/api/v1/pay/info`；`money` 是法币金额，`actual_amount` 是加密币数量。
+- current 提供 `expired_at/created_at` Unix 时间、`amount_text/actual_amount_text` 精确原文及 `trade_type/network/name/reselect/trade_url` 元数据。既有 float 属性不变。
+- `expiration_time=max(0, int(expired_at - 本地当前时间))`，是查询时快照，不是动态倒计时；本地时钟偏差会影响它。
+- current 未选方式时 token 为空、actual_amount 为兼容占位 0.0、actual_amount_text 为 None；这不表示已分配零金额付款。
+- current 缺原始链上哈希/付款链接，分别用 None/空串明确表示；不从 trade_url 推导。
+- Info 受付款端指纹限制，不是签名商户查询。拒绝不重试、不回退后台/旧接口，也不伪造请求身份。
 - 订单不存在等业务错误会抛出 `APIError`，并保留网关返回的 `status_code`
   和原始响应
+- 非对象 JSON、缺失/矛盾字段、未知状态、无效数字/期限统一抛不重试的 APIError；HTTP 4xx、5xx、网络和超时类别保持原样。
 
 ---
 
@@ -192,6 +199,10 @@ result = client.cancel_order(trade_id="xxx")
 **返回：** dict
 
 **异常：** `APIError`
+
+若第一次取消已执行但响应丢失，重试可能因当前状态不可取消而报业务错误；
+异常不证明没有取消。创建同 ID 也不保证只有一个交易：等待订单可能重建，
+过期/取消/失败后可有新 trade_id。请求参数相同的传输重试不等于 exactly-once。
 
 ---
 
@@ -213,9 +224,11 @@ is_valid = client.verify_callback(callback_data)
 
 **安全边界：**
 - `True` 只表示签名有效，不能单独作为发货条件。
-- 商户系统仍需按本地订单校验 `order_id`、`amount`、`status` 状态流转。
-- 支付成功处理必须幂等，建议用数据库唯一约束或事务确保同一个
-  `trade_id` / `block_transaction_id` 不会重复发货。
+- 商户仍须登记创建返回的交易尝试和法币，校验 order_id、amount、实际数额、地址与可接受状态；回调没有 fiat，不能从载荷猜货币。
+- 验签成功不代表该交易属于本订单。保留历史已知尝试，不能只接受最新 trade_id；过期后仍可能确认截止前转账。
+- 原子持久接收与按商户 order_id 唯一的 outbox 避免两个尝试安排两次履约；工作者还要保证实际发货幂等和失败恢复。
+- HTTP 200 在当前 Epusdt 中即为应答成功，正文不参与判断；推荐 plain ok 兼容旧部署，拒绝/存储失败应非 200。
+- 等待每 30 秒调度、60 秒缓存抑制；成功重试上限配置控制（默认 10），时间基于确认时间 + 2^notify_num 分钟；3/6 是 best-effort，4/5 无对应通知触发。
 
 **当前网关状态值：**
 - `1`: 等待支付

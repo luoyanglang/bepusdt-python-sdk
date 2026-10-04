@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- 新增显式 `query_mode="current"`，适配官方 aa3bd50 的包装查询响应；保留默认 legacy 查询及原有 float 字段，补充精确金额文本、Unix 时间和元数据。
+
+### Fixed
+- 对齐网关 JSON float64 数值签名与数值汇率文本格式；畸形签名安全拒绝。
+- 创建/查询/取消的无效响应统一为不重试的 APIError，保留网关业务拒绝和既有传输重试类别。
+- Flask/FastAPI 示例登记已知交易尝试，用持久 inbox/outbox 按商户订单去重；失败接收返回非 200。
+
+### Tests and Docs
+- 补充实际 Go 签名黄金样本、新旧查询、失败/重试与真实框架回调应答测试。
+- 明确指纹访问、同订单号重建、回调通知和零金额支持限制；本阶段不宣称全部接口、链上付款或生产验收完成。
+
 ## [0.3.15] - 2026-06-16
 
 ### Fixed

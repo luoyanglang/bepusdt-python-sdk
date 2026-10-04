@@ -77,13 +77,14 @@ auth_token = "your-api-token"
 
 ### Q: 回调接口应该返回什么？
 
-必须返回字符串 `"ok"`，表示回调成功：
+持久接收后推荐 HTTP 200/plain `"ok"` 兼容旧部署。当前 Epusdt 只检查
+HTTP 200；`200 fail` 也会被视为成功，拒绝或存储失败必须非 200：
 
 ```python
 @app.route('/notify', methods=['POST'])
 def notify():
     # 处理回调
-    return "ok", 200  # 必须返回 "ok"
+    return "ok", 200  # 必须先完成持久接收
 ```
 
 ### Q: 如何验证回调签名？
@@ -91,23 +92,31 @@ def notify():
 ```python
 callback_data = request.get_json()
 if client.verify_callback(callback_data):
-    # 签名验证通过后，还要校验本地订单号、金额、状态流转和幂等发货
-    mark_order_paid_once(callback_data)
+    # store 是已登记创建返回交易的商户持久事务接收器，见集成示例。
+    accepted = store.accept(callback_data)
 ```
 
 `verify_callback()` 只验证回调签名是否来自可信 BEpusdt 服务，不会替代商户
 系统自己的订单校验。支付成功回调可能因为网络失败被重试，业务处理必须保证
-同一个 `trade_id` 或 `block_transaction_id` 只发货一次。
+同一个商户 `order_id` 只安排一次履约，并保留创建返回的全部已知交易尝试。
+按 trade_id 去重不足以避免两次尝试造成两次发货；不能只接受最新 trade_id。
 
 ### Q: 订单状态有哪些？
 
 - `1` - 等待支付
 - `2` - 支付成功
 - `3` - 订单超时
+- `4` - 取消；`5` - 确认中；`6` - 失败。枚举有效不保证通知触发。
+
+当前等待通知每 30 秒调度、60 秒缓存抑制；成功重试由配置控制，默认上限 10，
+下一次基于确认时间 + 2^notify_num 分钟；3/6 是 best-effort，4/5 没有对应
+通知路径。过期订单还可能在历史扫描中确认截止前的转账，出现 3→5→2。
 
 ### Q: 查询订单接口需要签名吗？
 
-不需要，查询订单是公开的 GET 接口，不需要签名。
+两种模式均不验商户签名：默认 legacy 用旧 GET，显式 current 用 POST Info。
+新版受付款端指纹约束，绑定后商户服务器可能读不到；不是任意订单均可读的
+商户鉴权接口。不会自动降级/绕过。缺失交易哈希或付款链接不从 URL 猜测。
 
 ### Q: 如何指定收款地址？
 
@@ -335,7 +344,7 @@ print(f"签名: {signature}")
 1. 回调地址不是 HTTPS
 2. 回调地址无法访问
 3. 防火墙阻止
-4. 回调返回不是 "ok"
+4. 没有成功持久接收或返回非 HTTP 200（当前 Epusdt 不检查正文）
 
 ### Q: 回调签名验证失败
 
@@ -353,11 +362,14 @@ def notify():
     if not client.verify_callback(data):
         return "fail", 400
     
-    # 校验本地订单号、金额、状态流转，并用事务/唯一约束保证幂等
-    if data["status"] == 2 and mark_order_paid_once(data):
-        deliver_order(data["order_id"])
+    # store 先校验已登记尝试，再原子保存 inbox 和唯一商户订单 outbox。
+    try:
+        if not store.accept(data):
+            return "fail", 400
+    except Exception:
+        return "fail", 503
     
-    return "ok", 200  # 必须返回 "ok"
+    return "ok", 200  # 持久接收后应答；实际履约由幂等工作者完成
 ```
 
 ## 开发问题

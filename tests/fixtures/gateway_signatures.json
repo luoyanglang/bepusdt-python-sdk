@@ -1,0 +1,586 @@
+{
+  "cases": [
+    {
+      "json": "{\"amount\":10}",
+      "signature": "6cdb6682c25d910c08cbdbf0146da9a5"
+    },
+    {
+      "json": "{\"amount\":10.0}",
+      "signature": "6cdb6682c25d910c08cbdbf0146da9a5"
+    },
+    {
+      "json": "{\"amount\":1000000}",
+      "signature": "19f693249e524b3c1fe7b66416a2b372"
+    },
+    {
+      "json": "{\"amount\":1000000.5}",
+      "signature": "017040c5598f873112e2691f62380ff3"
+    },
+    {
+      "json": "{\"amount\":0.00001}",
+      "signature": "fd4a529488f8bff7eb7086624a803930"
+    },
+    {
+      "json": "{\"amount\":0.0001}",
+      "signature": "23462405893d9d1d35144da8e37f9ab7"
+    },
+    {
+      "json": "{\"amount\":-0.0}",
+      "signature": "b187579309d813914d5fd7bc8f63454a"
+    },
+    {
+      "json": "{\"amount\":9007199254740993}",
+      "signature": "6b437b9014c7cf27ceaa337aa19e644b"
+    },
+    {
+      "json": "{\"amount\":1.2345678901234567}",
+      "signature": "3a27fa3d41a0d4158c4e4f75a4a641d0"
+    },
+    {
+      "json": "{\"amount\":1e20}",
+      "signature": "25f4866dccb8172b2388aff00240dc0a"
+    },
+    {
+      "json": "{\"amount\":5e-324}",
+      "signature": "fe84ca6ad50e02576c69b5cd54f6f6e7"
+    },
+    {
+      "json": "{\"flag\":true}",
+      "signature": "2e365504e554f56a833f7bf6e3a70605"
+    },
+    {
+      "json": "{\"flag\":false}",
+      "signature": "9d16e2a7c77d6119b8e1e527fb33a1a9"
+    },
+    {
+      "json": "{\"amount\":0,\"empty\":\"\",\"absent\":null,\"signature\":\"excluded\"}",
+      "signature": "262ea600592c44c68332415cab4e931a"
+    },
+    {
+      "json": "{\"name\":\"测试商品\",\"rate\":\"~1.02\",\"trade_type\":\"usdt.trc20\"}",
+      "signature": "2392bbb38ec46032a401bbfc4606305a"
+    },
+    {
+      "json": "{\"order_id\":\"fixture-order\",\"amount\":10,\"notify_url\":\"https://merchant.example/notify\",\"redirect_url\":\"https://merchant.example/notify\",\"trade_type\":\"usdt.trc20\",\"timeout\":1000000}",
+      "signature": "804626d73d5d24878320055958b04858"
+    },
+    {
+      "json": "{\"trade_id\":\"fixture-trade\",\"order_id\":\"fixture-order\",\"amount\":10.0,\"actual_amount\":\"1.35\",\"token\":\"fixture-wallet\",\"status\":2,\"block_transaction_id\":\"fixture-hash\"}",
+      "signature": "5fecfc2162dc745d2347f5498d09dbcf"
+    },
+    {
+      "json": "{\"amount\":0.037559049269590965}",
+      "signature": "64cc059fc53127eaa3ff5d938e4ab178"
+    },
+    {
+      "json": "{\"amount\":-6.08923125307983e+65}",
+      "signature": "116e8b2021106c0d91c72c4b26ef2a45"
+    },
+    {
+      "json": "{\"amount\":1.908183453162907e-87}",
+      "signature": "51e1893bbb5b34e20eaa9d78340ef065"
+    },
+    {
+      "json": "{\"amount\":7.44340486033936e+303}",
+      "signature": "f549c2be89623b7af0ada98ca8a263f0"
+    },
+    {
+      "json": "{\"amount\":-4.888847404034473e+82}",
+      "signature": "5a550a7380889e926ef3cab1b63d6b41"
+    },
+    {
+      "json": "{\"amount\":-4.4643311136762396e-52}",
+      "signature": "a9bf4607cd751fd7885db14bb9e29aff"
+    },
+    {
+      "json": "{\"amount\":-6.791670439939253e-117}",
+      "signature": "8650df9e5617e4b9676b3376a56ba1df"
+    },
+    {
+      "json": "{\"amount\":2.232971572127014e-68}",
+      "signature": "0821700fe118b27adb8d397ed6e097c9"
+    },
+    {
+      "json": "{\"amount\":5.640577031020716e+43}",
+      "signature": "00b278cace00018c3f7d816629009dc4"
+    },
+    {
+      "json": "{\"amount\":-6.423175650006834e-63}",
+      "signature": "9934c156dca4c4e25a4f1e6f60cc1d8d"
+    },
+    {
+      "json": "{\"amount\":-6.551227421745091e+186}",
+      "signature": "bf37c535434ebe96a831f2e20af7b1a6"
+    },
+    {
+      "json": "{\"amount\":4.112417417669094e-64}",
+      "signature": "1b09dd1b41dd614bcd1709d40dedee51"
+    },
+    {
+      "json": "{\"amount\":4.220628350165909e-28}",
+      "signature": "971c8d4a88c6cb24b98e5b3090640779"
+    },
+    {
+      "json": "{\"amount\":-5.556627836887171e+100}",
+      "signature": "7970b7f00d639a85d5a112732a5ef07d"
+    },
+    {
+      "json": "{\"amount\":2.43886304921048e-142}",
+      "signature": "a0f58b660eea2e99f985b9eec98cc978"
+    },
+    {
+      "json": "{\"amount\":1.1636875920362178e+120}",
+      "signature": "2f922000775f07a2aeaec0340c4c60ed"
+    },
+    {
+      "json": "{\"amount\":1.2803487876970645e-177}",
+      "signature": "85b67221adfcaee90b521ff0776f4d57"
+    },
+    {
+      "json": "{\"amount\":-1.243273321716675e+92}",
+      "signature": "f28d52f9676c56dc08b7c453f61e3e3f"
+    },
+    {
+      "json": "{\"amount\":-1.098197889841769e-147}",
+      "signature": "3e2e3ee3772ee87fd92dc8af4f5ef74d"
+    },
+    {
+      "json": "{\"amount\":6.786104174122985e-211}",
+      "signature": "91d79c794063fc08aeddde75f7b7e064"
+    },
+    {
+      "json": "{\"amount\":3.6745304126966933e+118}",
+      "signature": "2e68e70b9ee4b3750e4deb6717920e24"
+    },
+    {
+      "json": "{\"amount\":9.478662722437738e-117}",
+      "signature": "aa35cbb53472e5a0fe7bfd426a7f9148"
+    },
+    {
+      "json": "{\"amount\":4.205552982824944e-75}",
+      "signature": "9d111ad2a389adedbf09847cf989db80"
+    },
+    {
+      "json": "{\"amount\":7.338297220825088e-289}",
+      "signature": "6cc483c2494ad954f5db104658c6596e"
+    },
+    {
+      "json": "{\"amount\":1.6767328003862176e+142}",
+      "signature": "4fcf47e4896a63e2e5e44f61a4a873ae"
+    },
+    {
+      "json": "{\"amount\":-1.213898007450192e+299}",
+      "signature": "083edf47ba5f86b7cf011b2c3e1bd54f"
+    },
+    {
+      "json": "{\"amount\":-5.417878510374718e-150}",
+      "signature": "903faf9584fffc676aba5699bc6acaf6"
+    },
+    {
+      "json": "{\"amount\":-7.649811494428925e-233}",
+      "signature": "99b3c9a061c456b250602ee7c8e1c184"
+    },
+    {
+      "json": "{\"amount\":195165.2279984369}",
+      "signature": "4e4733066ae3ac2d652fea03d2ab54e8"
+    },
+    {
+      "json": "{\"amount\":2.8871507724268302e-269}",
+      "signature": "0b3858df6ebce2d4de863a97bea698c7"
+    },
+    {
+      "json": "{\"amount\":-29.183800037602406}",
+      "signature": "b1003b5a9b781ede969460b2dad93a14"
+    },
+    {
+      "json": "{\"amount\":8.981434494671489e-54}",
+      "signature": "5285e77c81287db658b24c4f0b60667b"
+    },
+    {
+      "json": "{\"amount\":-3.425686860019345e-147}",
+      "signature": "6a4191c1e24afc3dedfa3c24238c9785"
+    },
+    {
+      "json": "{\"amount\":-3.6364074862927796e-295}",
+      "signature": "9875865701cebe5a4f084a5a09f9edc4"
+    },
+    {
+      "json": "{\"amount\":6.2572725104769314e+240}",
+      "signature": "26ebc492411c3ca29a2cf28e084c9a5c"
+    },
+    {
+      "json": "{\"amount\":7.1794882913067356e-71}",
+      "signature": "4ce7bf63a4b6b42e5906249acb0555bd"
+    },
+    {
+      "json": "{\"amount\":1.7497450576841863e-253}",
+      "signature": "229a0af1251bbd92ae7573763250dc0b"
+    },
+    {
+      "json": "{\"amount\":-3.000053470031684e+203}",
+      "signature": "fbcf403c882b1402663c2bab7d2b31c6"
+    },
+    {
+      "json": "{\"amount\":-4.631904972012868e-296}",
+      "signature": "cedf50c3404c3841a75993216bd718c8"
+    },
+    {
+      "json": "{\"amount\":-4.234559214661581e+267}",
+      "signature": "65fd76edb757cc6b91f6d4e25cd2e322"
+    },
+    {
+      "json": "{\"amount\":1.7503096341411598e+32}",
+      "signature": "8ca418f60cce0e6807397ebeebe4c4ff"
+    },
+    {
+      "json": "{\"amount\":6.607098503636356e-234}",
+      "signature": "a8cb75980534e39582d5c1c30eea5b7a"
+    },
+    {
+      "json": "{\"amount\":-9.670266328296565e-235}",
+      "signature": "884b75eb2777ba4ab2206bb8bce5f086"
+    },
+    {
+      "json": "{\"amount\":7.926466766350098e+71}",
+      "signature": "2a03079cc019c32548660c9fea86f89a"
+    },
+    {
+      "json": "{\"amount\":-9.263795767552711e-147}",
+      "signature": "ab9889efca4c33378e57ce0eca4ccce2"
+    },
+    {
+      "json": "{\"amount\":975414.0656102985}",
+      "signature": "e822e790cd120f797672826879497f09"
+    },
+    {
+      "json": "{\"amount\":2.1653337078614608e-113}",
+      "signature": "3c68d7022e0fa3c4a4f0eb49113454f9"
+    },
+    {
+      "json": "{\"amount\":1.1135204341824817e+66}",
+      "signature": "30474486b8db5f0c520a6d61e263923b"
+    },
+    {
+      "json": "{\"amount\":5.3676821416449326e+281}",
+      "signature": "1057a78e6b8c418bd45d1637b0553a1d"
+    },
+    {
+      "json": "{\"amount\":1.30596500450272e-249}",
+      "signature": "507d65f6e5cd2e118959e9539e7fa137"
+    },
+    {
+      "json": "{\"amount\":-1.0604804778929653e+279}",
+      "signature": "59169e7ab743bca4443bafdd6af3b933"
+    },
+    {
+      "json": "{\"amount\":-7.707096438081302}",
+      "signature": "8f904193f1123ae51e2442da4383f874"
+    },
+    {
+      "json": "{\"amount\":2.493040452358129e-142}",
+      "signature": "a52f9af978824fa038afc5ffa00ba480"
+    },
+    {
+      "json": "{\"amount\":2.711469634535059e+272}",
+      "signature": "36af161ba4c92768c1f1eb064e20775f"
+    },
+    {
+      "json": "{\"amount\":1106.8974428603233}",
+      "signature": "d72a2361461185b4293f39956c637ee8"
+    },
+    {
+      "json": "{\"amount\":-2.91801911666376e+78}",
+      "signature": "9fce1e2d7d19e72b459269422f1baf8a"
+    },
+    {
+      "json": "{\"amount\":3.6381820524362813e+140}",
+      "signature": "7e69f531190fafec7a6e818310eb6512"
+    },
+    {
+      "json": "{\"amount\":3.86691114182247e-68}",
+      "signature": "adf8a928e07006afadda31ea12dd58ea"
+    },
+    {
+      "json": "{\"amount\":-7.738275406154957e-205}",
+      "signature": "355bc7b5bef2a13fe057a5b24170ff60"
+    },
+    {
+      "json": "{\"amount\":6.792473351233695e+295}",
+      "signature": "3eb28f08f4be9fc883735bb54225c745"
+    },
+    {
+      "json": "{\"amount\":9.539518993833071e-18}",
+      "signature": "8919f27b0a858d00927a4e56a0cdcf64"
+    },
+    {
+      "json": "{\"amount\":4.395646825709232e-152}",
+      "signature": "336455f8d4fd3956da47a395f22c3bd2"
+    },
+    {
+      "json": "{\"amount\":1.447831296100365e-65}",
+      "signature": "dfe843b1c8b8d865f64e8c0db99931fd"
+    },
+    {
+      "json": "{\"amount\":1.0466893275136594e+198}",
+      "signature": "07a67916f2010f5ea6bbc3b346b20cf5"
+    },
+    {
+      "json": "{\"amount\":-1.5635113658810524e+281}",
+      "signature": "b263d7d43288a05b963d9da3c9ca8ef6"
+    },
+    {
+      "json": "{\"amount\":4.293571387788452e-163}",
+      "signature": "635474e28183d18ce5e8be6c3ab0683f"
+    },
+    {
+      "json": "{\"amount\":-4.591267804982368e-177}",
+      "signature": "f1da4a6b1dc880423d4d241209c8299d"
+    },
+    {
+      "json": "{\"amount\":-2.6120669818923227e-264}",
+      "signature": "3b6254c47807a5b7e7057e9b2b2371f9"
+    },
+    {
+      "json": "{\"amount\":-1.079367607907094e-60}",
+      "signature": "e2be7f36b17f749bb08ef7b224a70f02"
+    },
+    {
+      "json": "{\"amount\":-3.0896368609795857e+282}",
+      "signature": "4bde64828026a94823f4284de15df235"
+    },
+    {
+      "json": "{\"amount\":3.3553171056509233e-141}",
+      "signature": "cdc2f4d59ad52893aae0132cc8d2e1ae"
+    },
+    {
+      "json": "{\"amount\":-8.483055436860971e-249}",
+      "signature": "b7e7fd7e4e1925c2d65163adeeeca865"
+    },
+    {
+      "json": "{\"amount\":3.840685882140558e+50}",
+      "signature": "33ba671f1d9fed437739ad0b374eedc3"
+    },
+    {
+      "json": "{\"amount\":2.8896745318229123e+23}",
+      "signature": "79818713760b35305c09940b3e440639"
+    },
+    {
+      "json": "{\"amount\":5.517144563717069e+98}",
+      "signature": "d8bf5b088ad8ccbcfacd0ac9a5752c4b"
+    },
+    {
+      "json": "{\"amount\":-9.750992289184606e+184}",
+      "signature": "c3dd15af6476f6b551140e9995b8408f"
+    },
+    {
+      "json": "{\"amount\":7.537696919255155e-29}",
+      "signature": "d01262b68468f2136564c2c7d5906612"
+    },
+    {
+      "json": "{\"amount\":-7.307254095341216e-264}",
+      "signature": "31133448315fa9e031d3ccf87b4e2d28"
+    },
+    {
+      "json": "{\"amount\":-1.9683046273382745e+294}",
+      "signature": "140218faa65497884d99711cc35981e2"
+    },
+    {
+      "json": "{\"amount\":-8.097512392588502e+242}",
+      "signature": "92eb92f97eaf3ded36946ed2e548c14d"
+    },
+    {
+      "json": "{\"amount\":-1.0758538530301034e+45}",
+      "signature": "74098ab24cb78ed028b9134e250be962"
+    },
+    {
+      "json": "{\"amount\":1.1399610547610624e+214}",
+      "signature": "0a4a3154393056711298ccc19c8ea60e"
+    },
+    {
+      "json": "{\"amount\":-1.3320898715731598e-77}",
+      "signature": "efc5c5426d3f17a86087ddb9ef69c259"
+    },
+    {
+      "json": "{\"amount\":6.528586500681085e+80}",
+      "signature": "bad24015027de8b74476cbb85eaa458b"
+    },
+    {
+      "json": "{\"amount\":-4.9978418903797435e-163}",
+      "signature": "e572db7c4eabb50923488530bc07411d"
+    },
+    {
+      "json": "{\"amount\":-5.676418291111904e-268}",
+      "signature": "66b8e4380ef6f3558848fa92ff63d5f7"
+    },
+    {
+      "json": "{\"amount\":-6.382151434486138e-224}",
+      "signature": "048cc9841afeb90b8a67e3f09984da8a"
+    },
+    {
+      "json": "{\"amount\":-1.1563797996825832e-18}",
+      "signature": "fca9ff3a4718ef35f909d2c422f3234c"
+    },
+    {
+      "json": "{\"amount\":3.184467360502862e-85}",
+      "signature": "9f9a885e6b64891dfa3a933c7641ac78"
+    },
+    {
+      "json": "{\"amount\":-4.165834254606014e+135}",
+      "signature": "9882be9ed0b1ba0af43bdcb627350e0a"
+    },
+    {
+      "json": "{\"amount\":-1.3501453164179327e+213}",
+      "signature": "147b32c35a23e205692196c22647e980"
+    },
+    {
+      "json": "{\"amount\":2.1868834767970542e+130}",
+      "signature": "19b8ab815da395e59f74300079522cc8"
+    },
+    {
+      "json": "{\"amount\":4.131214141366941e-249}",
+      "signature": "4dd506602382a98c09489274a1f760c6"
+    },
+    {
+      "json": "{\"amount\":-2.85298237481208e-131}",
+      "signature": "ed21d98353d5e62cf0058a56a924da2c"
+    },
+    {
+      "json": "{\"amount\":3.9660985306506294e-225}",
+      "signature": "d8c4598e6c025513e57a3cd186be281d"
+    },
+    {
+      "json": "{\"amount\":6.1096890248707225e+97}",
+      "signature": "0ce40fffc3e0a64b6f5ed16f2e369b57"
+    },
+    {
+      "json": "{\"amount\":-2.3992108722106466e+262}",
+      "signature": "b0d208d77ab1b772736c1bda69f27a2d"
+    },
+    {
+      "json": "{\"amount\":6.0076494270927706e+94}",
+      "signature": "ac0fcc90b2aaeabf3373013540c52ac6"
+    },
+    {
+      "json": "{\"amount\":-0.000015184444827175407}",
+      "signature": "d1507f6a8668bf4cd84f9aa4c2d27fff"
+    },
+    {
+      "json": "{\"amount\":-2.5449195001516726e+175}",
+      "signature": "b9dbcc20208fb47bf9e0b2767c704b9d"
+    },
+    {
+      "json": "{\"amount\":5.260160164706189e+300}",
+      "signature": "02a503b14e6ec78d2856203704dc1138"
+    },
+    {
+      "json": "{\"amount\":-9.783783703901343e+293}",
+      "signature": "80ce850314b55273efe34bc4a93485f2"
+    },
+    {
+      "json": "{\"amount\":5.6004224231023244e-151}",
+      "signature": "6d656fd6cd4aee582710feb69176ded3"
+    },
+    {
+      "json": "{\"amount\":5.055815711970889e-203}",
+      "signature": "9b71162031abfaed6ec3b4df936f0ec9"
+    },
+    {
+      "json": "{\"amount\":-6.362829187166502e+51}",
+      "signature": "ba500b6fdeb83d7198db29f22a5848ea"
+    },
+    {
+      "json": "{\"amount\":-2.417195069175774e+113}",
+      "signature": "6d6e606d1f379530416b2c40a06370c5"
+    },
+    {
+      "json": "{\"amount\":-1.1084483387954663e+46}",
+      "signature": "2d7df731cb69b8cffb1d7d082951c3d8"
+    },
+    {
+      "json": "{\"amount\":-2.3644160940738915e+127}",
+      "signature": "c36b61c08513fb0700305da89b3479d2"
+    },
+    {
+      "json": "{\"amount\":7.688534581291941e+59}",
+      "signature": "34e31cb8eaccf42c6e3207dfd25b71ef"
+    },
+    {
+      "json": "{\"amount\":-4.533551042669728e-48}",
+      "signature": "6cab4738c521db7876c2ee2bdb584ea5"
+    },
+    {
+      "json": "{\"amount\":-1.716788534982657e+185}",
+      "signature": "26c42ddb278b96775e98fe702ce04f77"
+    },
+    {
+      "json": "{\"amount\":2.5865460834223883e-39}",
+      "signature": "9648ecd652f8f48be0660abd2a7d8a36"
+    },
+    {
+      "json": "{\"amount\":1.5728116522484515e-288}",
+      "signature": "41b8dcb21c061c856cd5061db037f8a8"
+    },
+    {
+      "json": "{\"amount\":-6.558857739658321e+217}",
+      "signature": "a6c4e5e8659f0b0c0aad0c41b01ebdd3"
+    },
+    {
+      "json": "{\"amount\":3.9634013551907313e+99}",
+      "signature": "e11a589cc1d84b32a59603466480ff08"
+    },
+    {
+      "json": "{\"amount\":2.0420029673471582e+189}",
+      "signature": "894932d85c807ad64dbe3536f9a36758"
+    },
+    {
+      "json": "{\"amount\":2.2845158536633907e-89}",
+      "signature": "d03b511af0c007f71a144c6c1f74cd59"
+    },
+    {
+      "json": "{\"amount\":-7.043632378376834e+259}",
+      "signature": "859bb5858f561225f7afdcf1815b2cdf"
+    },
+    {
+      "json": "{\"amount\":-1.3077299182219608e-140}",
+      "signature": "3df5484239524cfa6533e557412d677d"
+    },
+    {
+      "json": "{\"amount\":1.6756485117337415e+150}",
+      "signature": "19db1588ea41f9ba2fbe2183f30c252d"
+    },
+    {
+      "json": "{\"amount\":2.6930255885451653e-179}",
+      "signature": "0f48b05de9ea439f8c39251f74f4c1cb"
+    },
+    {
+      "json": "{\"amount\":1.0986860602654612e+194}",
+      "signature": "da9b8e43b2809ba509b8f9ebbe789083"
+    },
+    {
+      "json": "{\"amount\":2.7775680556186685e+306}",
+      "signature": "2ee2e8b5f99173c572383fb8a4fe079a"
+    },
+    {
+      "json": "{\"amount\":1.672532132509612e-72}",
+      "signature": "f74a0f10f7de5cc260fbcc626f43e585"
+    },
+    {
+      "json": "{\"amount\":-1.9832826727332504e-110}",
+      "signature": "d47b49ee83bdb0d6e725e7736e01576e"
+    },
+    {
+      "json": "{\"amount\":2.6522798386680496e-246}",
+      "signature": "bfbc9d666a7aacc6a821140b84122c79"
+    },
+    {
+      "json": "{\"amount\":0.0024464383244381244}",
+      "signature": "5eeceaf192649da185c2f416f80a2555"
+    },
+    {
+      "json": "{\"amount\":-1.0607985473384251e+102}",
+      "signature": "0cc038b83d53e33c83e69a569acdc273"
+    }
+  ],
+  "gateway_sha": "aa3bd5097f258cccd5a53baed7211c74733b8332",
+  "token": "fixture-token"
+}

@@ -41,6 +41,8 @@ dev = [
     "flake8>=4.0.0",
     "mypy>=0.950",
     "qrcode[pil]>=7.0.0",
+    "flask>=2.2",
+    "fastapi>=0.95",
 ]
 
 [project.urls]

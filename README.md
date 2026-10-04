@@ -8,7 +8,7 @@
 <a href="https://pypi.org/project/bepusdt/"><img src="https://img.shields.io/pypi/v/bepusdt.svg" alt="PyPI version"></a>
 <a href="https://pypi.org/project/bepusdt/"><img src="https://img.shields.io/pypi/pyversions/bepusdt.svg" alt="Python Support"></a>
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
-<a href="https://github.com/v03413/bepusdt"><img src="https://img.shields.io/badge/BEpusdt-v1.23+-blue" alt="BEpusdt"></a>
+<a href="https://github.com/v03413/bepusdt"><img src="https://img.shields.io/badge/BEpusdt-API-blue" alt="BEpusdt"></a>
 </p>
 
 ## 🪧 介绍
@@ -24,8 +24,8 @@ BEpusdt 支付网关的 Python SDK，让 Python 开发者能够快速集成 USDT
 - 🔄 **自动重试** - 网络错误自动重试，提升成功率
 - 📱 **二维码生成** - 一键生成收款地址二维码
 - 📝 **类型提示** - 完整的 IDE 智能提示
-- ✅ **生产就绪** - 经过真实环境测试
-- 🔄 **完全兼容** - 完整支持 BEpusdt API
+- 🔎 **明确兼容模式** - 保留旧版查询，显式选择当前网关查询
+- 🧪 **契约验证** - Go 签名黄金样本与商户流程回归测试
 
 ## 🌟 支持的网络
 
@@ -51,7 +51,11 @@ pip install bepusdt[qrcode]
 
 ## 🔖 兼容性
 
-- 当前已验证的 BEpusdt 网关基线：官方上游 main commit f4bdee1，最近正式 tag 为 v1.23.6。
+- 旧模式 `query_mode="legacy"`（默认）：历史基线 f4bdee1 / v1.23.6，GET `/pay/check-status/{trade_id}`。
+- 新模式 `query_mode="current"`：按官方 aa3bd5097f258cccd5a53baed7211c74733b8332 的 POST `/api/v1/pay/info` 适配；本批是源码和离线契约验证，不是实际数据库、浏览器或链上付款验收。
+- 创建、取消的现有方法含义不变；待选收银台创建、方式发现/选择、后台、Epay、MQTT 不在本阶段支持范围。
+- Info 不验商户签名，绑定付款端指纹后可能拒绝服务器读取；不自动探测、降级或绕过访问限制，不能把查询结果作为签名支付凭据。
+- 上游固定/待选零金额、正/零共享钱包及同 ID 跨零重建存在源码限制，尚未验证为安全支付模式。SDK 仍接受已有零金额参数，但本批不承诺这些模式的地址独占、正确归属或完整兼容。
 - SDK 包 metadata 仍允许 Python 3.7+；当前 CI 持续验证 Python 3.8 至
   3.12。Python 3.7 已进入生命周期末期，最低版本调整会作为兼容性边界单独规划。
 
@@ -160,9 +164,25 @@ if order.status == OrderStatus.SUCCESS:
     print("✅ 支付成功")
 ```
 
-`query_order()` 会把网关返回的 `trade_hash` 映射为
+旧模式 `query_order()` 会把网关返回的 `trade_hash` 映射为
 `order.block_transaction_id`；兼容网关如果直接返回 `block_transaction_id`，
 SDK 也会映射到同一属性。
+
+当前网关必须显式配置：
+
+```python
+client = BEpusdtClient(
+    api_url="https://your-bepusdt-server.com", api_token="your-api-token",
+    query_mode="current"
+)
+order = client.query_order("known-trade-id")
+print(order.expired_at, order.amount_text, order.actual_amount_text)
+```
+
+新版保留原有 float 属性，另提供金额原文和 Unix 时间。`expiration_time` 为
+按本地时钟计算、截断并归零的剩余秒数；`expired_at` 为权威返回的绝对期限。
+未选方式时地址为空、actual_amount 为兼容占位 0.0，精确文本为 None。
+Info 不提供原始交易哈希或付款链接：前者为 None、后者为空，不从 trade_url 猜测。
 
 ### 验证回调
 
@@ -173,17 +193,25 @@ def notify():
     if not client.verify_callback(data):
         return "fail", 400
 
-    # 签名只证明回调来自 BEpusdt。
-    # 发货前仍需查询本地订单并校验 order_id、amount、status 状态流转，
-    # 再用数据库唯一约束或事务确保 trade_id/block_transaction_id 只处理一次。
-    if data["status"] == 2 and mark_order_paid_once(data):
-        deliver_order(data["order_id"])
-
+    # store 是商户的持久事务接收器，详见 examples/callback_store.py。
+    # 校验已登记交易尝试、金额/法币；原子记录 inbox 和唯一 order_id outbox。
+    try:
+        if not store.accept(data):
+            return "fail", 400
+    except Exception:
+        return "fail", 503
     return "ok", 200
 ```
 
 当前网关状态值为：`1` 等待支付、`2` 支付成功、`3` 支付超时、
 `4` 订单取消、`5` 等待区块确认、`6` 交易确认失败。
+
+当前上游不保证发送 4/5 回调；等待通知每 30 秒调度、60 秒缓存抑制；
+过期/失败为 best-effort，成功才进入配置控制的重试队列（默认上限 10）。
+过期的已知尝试仍可能随后成功，不能只接受最新 trade_id。按商户 order_id
+确保一次履约；实际工作者需另做履约幂等与失败恢复。当前 Epusdt 只检查 HTTP 200，
+拒绝/存储失败必须非 200，持久接收后推荐 plain ok 兼容旧部署。
+示例使用仓库外 SQLite 文件，配置及运行方式见[集成示例](docs/examples.md)。
 
 ### 生成二维码
 

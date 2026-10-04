@@ -3,7 +3,7 @@
 import io
 import base64
 from enum import IntEnum, Enum
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, Dict, Any, TYPE_CHECKING
 from dataclasses import dataclass
 
 if TYPE_CHECKING:
@@ -14,15 +14,14 @@ class OrderStatus(IntEnum):
     """订单状态枚举
 
     回调行为说明：
-        - WAITING (1): 订单创建后每分钟推送一次，直到支付或超时，不重试
-        - SUCCESS (2): 支付成功后推送，失败会重试（间隔 2,4,8,16...分钟，最多10次）
-        - TIMEOUT (3): 订单超时后推送一次，不重试
-        - CANCELED (4): 订单已取消，推送一次，不重试
-        - CONFIRMING (5): 等待区块链确认中，推送一次
-        - FAILED (6): 区块链交易确认失败，推送一次，不重试
+        - WAITING (1): 当前上游每 30 秒调度，缓存抑制 60 秒，非精确周期保证
+        - SUCCESS (2): 失败进入配置控制的重试队列，默认上限 10
+        - TIMEOUT (3)、FAILED (6): best-effort 推送，不进入成功重试队列
+        - CANCELED (4)、CONFIRMING (5): 当前取消/确认中路径没有相应推送
 
     注意：
-        商户端收到回调后，应返回状态码 200 和内容 "ok" 表示接收成功
+        枚举有效不代表必然推送。状态 3 之后仍可能确认截止前的交易并变为成功。
+        持久接收后返回 HTTP 200/plain ok；当前 Epusdt 只检查 HTTP 200。
     """
 
     WAITING = 1  # 等待支付
@@ -85,6 +84,9 @@ class Order:
         fiat: 法币类型（可选，如 CNY/USD/EUR）
         status: 订单状态（可选）
         block_transaction_id: 区块链交易ID（可选）
+        expired_at/created_at: 新版查询的 Unix 时间（可选）
+        amount_text/actual_amount_text: 保留响应精度的金额文本（可选）
+        trade_type/network/name/reselect/trade_url: 新版查询元数据（可选）
     """
 
     trade_id: str
@@ -97,6 +99,16 @@ class Order:
     fiat: Optional[str] = None
     status: Optional[OrderStatus] = None
     block_transaction_id: Optional[str] = None
+    # Additive metadata: old float attributes and constructor positions stay stable.
+    expired_at: Optional[int] = None
+    created_at: Optional[int] = None
+    amount_text: Optional[str] = None
+    actual_amount_text: Optional[str] = None
+    trade_type: Optional[str] = None
+    network: Optional[Dict[str, Any]] = None
+    name: Optional[str] = None
+    reselect: Optional[bool] = None
+    trade_url: Optional[str] = None
 
     @classmethod
     def from_dict(cls, data: dict) -> "Order":
@@ -119,6 +131,10 @@ class Order:
             fiat=data.get("fiat"),
             status=OrderStatus(data["status"]) if "status" in data else None,
             block_transaction_id=data.get("block_transaction_id"),
+            amount_text=str(data["amount"]),
+            actual_amount_text=str(data["actual_amount"]),
+            trade_type=data.get("trade_type"),
+            name=data.get("name"),
         )
 
     def generate_qrcode(self, box_size: int = 10, border: int = 4) -> "Image.Image":

@@ -1,67 +1,24 @@
 """BEpusdt 客户端"""
 
 import logging
-import math
 import requests
 from typing import Optional, Dict, Any, Union
 from .signature import generate_signature, verify_signature
 from .models import Order, TradeType
 from .exceptions import APIError, NetworkError, RequestTimeoutError, ServerError, ClientError, ValidationError
 from .retry import retry_on_error
+from .responses import parse_created_order, parse_cancel, parse_query
+
+from .validation import (
+    _normalize_amount,
+    _normalize_rate,
+    _validate_timeout,
+    _validate_request_timeout,
+    _validate_max_retries,
+    _validate_retry_delay,
+)
 
 logger = logging.getLogger(__name__)
-
-
-def _normalize_amount(amount: Union[int, float]) -> Union[int, float]:
-    if isinstance(amount, bool) or not isinstance(amount, (int, float)):
-        raise ValidationError(f"amount 必须是数字（int 或 float），当前值: {amount!r}")
-    if not math.isfinite(float(amount)):
-        raise ValidationError(f"amount 必须是有限数字，当前值: {amount!r}")
-    return int(amount) if amount == int(amount) else amount
-
-
-def _normalize_rate(rate: Union[int, float, str]) -> str:
-    if isinstance(rate, bool) or not isinstance(rate, (int, float, str)):
-        raise ValidationError(f"rate 必须是数字或字符串，当前值: {rate!r}")
-    if isinstance(rate, (int, float)):
-        if not math.isfinite(float(rate)):
-            raise ValidationError(f"rate 必须是有限数字，当前值: {rate!r}")
-        return str(int(rate)) if rate == int(rate) else str(rate)
-    return rate
-
-
-def _validate_timeout(timeout: int) -> int:
-    if isinstance(timeout, bool) or not isinstance(timeout, int):
-        raise ValidationError(f"timeout 必须是整数秒，当前值: {timeout!r}")
-    return timeout
-
-
-def _validate_request_timeout(timeout: Union[int, float]) -> Union[int, float]:
-    if (
-        isinstance(timeout, bool)
-        or not isinstance(timeout, (int, float))
-        or not math.isfinite(float(timeout))
-        or timeout <= 0
-    ):
-        raise ValidationError(f"timeout 必须是正数，当前值: {timeout!r}")
-    return timeout
-
-
-def _validate_max_retries(max_retries: int) -> int:
-    if isinstance(max_retries, bool) or not isinstance(max_retries, int) or max_retries < 0:
-        raise ValidationError(f"max_retries 必须是非负整数，当前值: {max_retries!r}")
-    return max_retries
-
-
-def _validate_retry_delay(retry_delay: Union[int, float]) -> Union[int, float]:
-    if (
-        isinstance(retry_delay, bool)
-        or not isinstance(retry_delay, (int, float))
-        or not math.isfinite(float(retry_delay))
-        or retry_delay < 0
-    ):
-        raise ValidationError(f"retry_delay 必须是非负数字，当前值: {retry_delay!r}")
-    return retry_delay
 
 
 class BEpusdtClient:
@@ -73,6 +30,7 @@ class BEpusdtClient:
         timeout: 请求超时时间（秒），默认 30
         max_retries: 最大重试次数，默认 3
         retry_delay: 重试延迟（秒），默认 1.0
+        query_mode: legacy（默认）或 current；不自动探测/降级
 
     Example:
         >>> client = BEpusdtClient(
@@ -87,7 +45,16 @@ class BEpusdtClient:
         ... )
     """
 
-    def __init__(self, api_url: str, api_token: str, timeout: int = 30, max_retries: int = 3, retry_delay: float = 1.0):
+    def __init__(
+        self,
+        api_url: str,
+        api_token: str,
+        timeout: int = 30,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+        *,
+        query_mode: str = "legacy",
+    ):
         if not api_url.startswith("https://"):
             raise ValidationError(f"api_url 必须使用 HTTPS 协议（以 https:// 开头），当前值: {api_url!r}")
         self.api_url = api_url.rstrip("/")
@@ -95,6 +62,9 @@ class BEpusdtClient:
         self.timeout = _validate_request_timeout(timeout)
         self.max_retries = _validate_max_retries(max_retries)
         self.retry_delay = _validate_retry_delay(retry_delay)
+        if query_mode not in ("legacy", "current"):
+            raise ValidationError("query_mode 必须为 legacy 或 current")
+        self.query_mode = query_mode
         self.session = requests.Session()
 
         from . import __version__, __url__
@@ -116,7 +86,8 @@ class BEpusdtClient:
     ) -> Order:
         """创建支付订单
 
-        使用相同订单号创建订单时，不会产生两个交易；会根据实际参数重建订单。
+        同订单号的等待订单可能重建；终局失败/取消/过期后可能产生新 trade_id。
+        响应丢失不能证明未创建。零金额及跨零重建的上游限制见兼容文档。
 
         Args:
             order_id: 商户订单号，必须唯一
@@ -204,7 +175,6 @@ class BEpusdtClient:
         params["signature"] = generate_signature(params, self.api_token)
 
         # 调试日志（DEBUG 级别，且脱敏）
-        logger = logging.getLogger(__name__)
         if logger.isEnabledFor(logging.DEBUG):
             debug_params = {k: v for k, v in params.items() if k != "signature"}
             debug_params["signature"] = "***"
@@ -213,17 +183,13 @@ class BEpusdtClient:
         url = f"{self.api_url}/api/v1/order/create-transaction"
         response = self._post(url, params)
 
-        if response["status_code"] != 200:
-            raise APIError(
-                response.get("message", "创建订单失败"), status_code=response["status_code"], response=response
-            )
-
-        return Order.from_dict(response["data"])
+        return parse_created_order(response, order_id)
 
     def cancel_order(self, trade_id: str) -> Dict[str, Any]:
         """取消订单
 
-        取消后，系统将不再监控此订单，同时释放对应金额占用。
+        当前上游仅允许取消等待订单。响应丢失后的重试可能返回已不可取消；
+        该异常不证明第一次取消没有执行，不得据此自动创建替代订单。
 
         Args:
             trade_id: BEpusdt 交易ID
@@ -243,18 +209,15 @@ class BEpusdtClient:
         url = f"{self.api_url}/api/v1/order/cancel-transaction"
         response = self._post(url, params)
 
-        if response["status_code"] != 200:
-            raise APIError(
-                response.get("message", "取消订单失败"), status_code=response["status_code"], response=response
-            )
-
-        return response["data"]
+        return parse_cancel(response, trade_id)
 
     def query_order(self, trade_id: str) -> Order:
         """查询订单状态
 
         查询指定订单的当前状态和详细信息。
-        注意：此接口不需要签名验证。
+        legacy 使用旧 GET，current 使用新版 POST Info；两者不验商户签名。
+        新版受付款端指纹约束，不是任意订单均可读的签名商户查询。
+        新版不提供原始交易哈希/付款链接；保留绝对截止时间和精确金额文本。
 
         Args:
             trade_id: BEpusdt 交易ID
@@ -270,72 +233,21 @@ class BEpusdtClient:
             >>> if order.status == OrderStatus.SUCCESS:
             ...     print("订单已支付")
         """
-        url = f"{self.api_url}/pay/check-status/{trade_id}"
-        response = self._get(url)
-
-        # check-status 接口返回格式不同，需要特殊处理
-        if response.get("status_code") and response["status_code"] != 200:
-            raise APIError(
-                response.get("message", "订单不存在或查询失败"),
-                status_code=response["status_code"],
-                response=response,
-            )
-        if "trade_id" not in response:
-            raise APIError("订单不存在或查询失败", response=response)
-
-        # 构造 Order 对象需要的数据
-        # 注意：查询接口返回的字段较少，某些字段会是默认值
-        order_data = {
-            "trade_id": response["trade_id"],
-            "order_id": "",  # 查询接口不返回此字段
-            "amount": 0,  # 查询接口不返回此字段
-            "actual_amount": 0,  # 查询接口不返回此字段
-            "token": "",  # 查询接口不返回此字段
-            "expiration_time": 0,  # 查询接口不返回此字段
-            "payment_url": "",  # 查询接口不返回此字段
-            "status": response["status"],
-            "block_transaction_id": response.get("trade_hash") or response.get("block_transaction_id", ""),
-        }
-
-        return Order.from_dict(order_data)
+        if self.query_mode == "current":
+            response = self._post(f"{self.api_url}/api/v1/pay/info", {"trade_id": trade_id})
+        else:
+            response = self._get(f"{self.api_url}/pay/check-status/{trade_id}")
+        return parse_query(response, trade_id, self.query_mode)
 
     def verify_callback(self, callback_data: Any) -> bool:
-        """验证支付回调签名
+        """只验证回调真实性；畸形签名或非协议值安全拒绝。
 
-        Args:
-            callback_data: 回调数据字典，包含以下字段：
-                - trade_id: BEpusdt 交易ID
-                - order_id: 商户订单号
-                - amount: 请求金额（CNY）
-                - actual_amount: 实际支付金额（USDT/USDC/TRX/ETH/BNB/GRAM）
-                - token: 收款地址
-                - block_transaction_id: 区块链交易ID
-                - status: 订单状态（1=等待支付, 2=支付成功, 3=支付超时）
-                - signature: 签名
-
-        Returns:
-            bool: 签名是否有效
-
-        回调行为说明：
-            - status=1 (等待支付): 订单创建后每分钟推送一次，直到支付或超时，不重试
-            - status=2 (支付成功): 支付完成后推送，失败会重试（间隔 2,4,8,16...分钟，最多10次）
-            - status=3 (支付超时): 订单超时后推送一次，不重试
-
-        注意：
-            验证成功后，应返回 HTTP 200 和内容 "ok"，否则系统会认为回调失败
-
-        Example:
-            >>> @app.route('/notify', methods=['POST'])
-            >>> def notify():
-            ...     data = request.get_json()
-            ...     if client.verify_callback(data):
-            ...         if data['status'] == OrderStatus.SUCCESS:
-            ...             # 处理支付成功
-            ...             return "ok", 200
-            ...         elif data['status'] == OrderStatus.TIMEOUT:
-            ...             # 处理订单超时
-            ...             return "ok", 200
-            ...     return "fail", 400
+        商户还须校验创建返回的已知交易尝试、订单、金额/法币与一次履约。
+        amount 是订单法币金额；actual_amount 是加密币数额。
+        六状态的通知边界见 OrderStatus；过期订单可能随后确认截止前的交易。
+        成功回调重试上限由配置决定，下一次以确认时间 + 2^notify_num 分钟计算。
+        当前 Epusdt 仅检查 HTTP 200；拒绝/接收失败必须非 200，持久接收后
+        推荐 plain ok 兼容旧部署。消费示例使用独立持久 inbox/outbox。
         """
         if not isinstance(callback_data, dict):
             return False
@@ -386,7 +298,10 @@ class BEpusdtClient:
                     raise ClientError(f"客户端错误: HTTP {resp.status_code}", status_code=resp.status_code)
 
                 resp.raise_for_status()
-                return resp.json()
+                body = resp.json()
+                if not isinstance(body, dict):
+                    raise APIError("响应必须为 JSON 对象")
+                return body
 
             except requests.exceptions.Timeout as e:
                 raise RequestTimeoutError(f"请求超时: {str(e)}")

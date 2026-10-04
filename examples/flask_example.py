@@ -1,17 +1,21 @@
 """Flask 集成示例"""
 
 from flask import Flask, jsonify, request
+import os
 
 from bepusdt import BEpusdtClient
+
+if __package__:
+    from .callback_store import CallbackStore
+else:
+    from callback_store import CallbackStore
 
 app = Flask(__name__)
 
 # 初始化客户端
 client = BEpusdtClient(api_url="https://your-bepusdt-server.com", api_token="your-api-token")
 
-# 示例内存状态仅用于演示。生产环境请替换为数据库事务和唯一约束。
-created_orders = {}
-processed_trade_ids = set()
+store = CallbackStore(os.environ.get("BEPUSDT_EXAMPLE_DB"))
 
 
 @app.route("/create_payment", methods=["POST"])
@@ -25,6 +29,7 @@ def create_payment():
         return jsonify({"success": False, "error": "invalid request"}), 400
 
     try:
+        store.reserve(order_id, amount)
         order = client.create_order(
             order_id=order_id,
             amount=amount,
@@ -32,11 +37,11 @@ def create_payment():
             redirect_url="https://your-domain.com/payment/success",
             trade_type=data.get("trade_type", "usdt.trc20"),
         )
+        store.register(order)
     except Exception:
         app.logger.exception("create payment failed")
         return jsonify({"success": False, "error": "payment creation failed"}), 502
 
-    created_orders[order_id] = float(amount)
     return jsonify(
         {
             "success": True,
@@ -55,19 +60,14 @@ def payment_notify():
     if not client.verify_callback(callback_data):
         return "fail", 400
 
-    order_id = callback_data.get("order_id")
-    trade_id = callback_data.get("trade_id")
-    status = callback_data.get("status")
-    expected_amount = created_orders.get(order_id)
-
-    if expected_amount is None or float(callback_data.get("amount", -1)) != expected_amount:
+    try:
+        accepted = store.accept(callback_data)
+    except Exception:
+        app.logger.exception("callback acceptance failed")
+        return "fail", 503
+    if not accepted:
         return "fail", 400
-
-    if status == 2 and trade_id not in processed_trade_ids:
-        # 生产环境请使用数据库原子更新，确保重复回调不会重复发货。
-        processed_trade_ids.add(trade_id)
-        app.logger.info("payment succeeded for order %s", order_id)
-
+    # Durable acceptance precedes acknowledgement; a separate worker fulfills the outbox.
     return "ok", 200
 
 
