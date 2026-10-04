@@ -181,7 +181,9 @@ print(order.expired_at, order.amount_text, order.actual_amount_text)
 
 新版保留原有 float 属性，另提供金额原文和 Unix 时间。`expiration_time` 为
 按本地时钟计算、截断并归零的剩余秒数；`expired_at` 为权威返回的绝对期限。
-未选方式时地址为空、actual_amount 为兼容占位 0.0，精确文本为 None。
+上游待选订单返回地址为空、actual_amount 为字符串 "0"；SDK 保留精确文本 "0"，
+float 属性为 0.0。兼容空串响应时精确文本为 None。应结合方式、地址和状态判断
+是否已选择付款方式；零值本身不表示已分配零金额付款。
 Info 不提供原始交易哈希或付款链接：前者为 None、后者为空，不从 trade_url 猜测。
 
 ### 验证回调

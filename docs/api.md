@@ -174,7 +174,7 @@ order = client.query_order(trade_id="xxx")
 - current 发送 `{"trade_id": "..."}` 至 `/api/v1/pay/info`；`money` 是法币金额，`actual_amount` 是加密币数量。
 - current 提供 `expired_at/created_at` Unix 时间、`amount_text/actual_amount_text` 精确原文及 `trade_type/network/name/reselect/trade_url` 元数据。既有 float 属性不变。
 - `expiration_time=max(0, int(expired_at - 本地当前时间))`，是查询时快照，不是动态倒计时；本地时钟偏差会影响它。
-- current 未选方式时 token 为空、actual_amount 为兼容占位 0.0、actual_amount_text 为 None；这不表示已分配零金额付款。
+- current 上游待选订单的 token 为空、actual_amount 原文为 "0"；SDK 返回 actual_amount=0.0、actual_amount_text="0"。兼容原文为空串的响应时，后者为 None。结合 trade_type、地址和状态判断是否已选择方式；零值不表示已分配零金额付款。
 - current 缺原始链上哈希/付款链接，分别用 None/空串明确表示；不从 trade_url 推导。
 - Info 受付款端指纹限制，不是签名商户查询。拒绝不重试、不回退后台/旧接口，也不伪造请求身份。
 - 订单不存在等业务错误会抛出 `APIError`，并保留网关返回的 `status_code`

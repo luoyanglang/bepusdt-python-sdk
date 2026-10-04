@@ -21,6 +21,12 @@ def _text(value: Any, *, nonempty: bool = False) -> str:
     return value
 
 
+def _optional_texts(data: dict, *fields: str) -> None:
+    for field in fields:
+        if data.get(field) is not None:
+            _text(data[field])
+
+
 def _integer(value: Any) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise ValueError("expected nonnegative integer")
@@ -60,8 +66,7 @@ def _created(data: dict) -> Order:
     _integer(data["expiration_time"])
     if "status" in data:
         _status(data["status"])
-    if data.get("fiat") is not None:
-        _text(data["fiat"])
+    _optional_texts(data, "fiat", "trade_type", "name", "block_transaction_id")
     return Order.from_dict(data)
 
 
@@ -99,6 +104,7 @@ def _legacy(body: dict, trade_id: str) -> Order:
         _envelope(body)
     if _text(body["trade_id"], nonempty=True) != trade_id:
         raise ValueError("trade id mismatch")
+    _optional_texts(body, "trade_hash", "block_transaction_id")
     tx_hash = body.get("trade_hash") or body.get("block_transaction_id", "")
     return Order(
         trade_id=trade_id,

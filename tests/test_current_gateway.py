@@ -85,16 +85,21 @@ def test_current_six_states(status):
         assert sdk.query_order("fixture-trade").status == OrderStatus(status)
 
 
-def test_expired_and_unselected_snapshot_are_explicit():
+@pytest.mark.parametrize("actual", ["0", ""], ids=["gateway-pending", "empty-compatibility"])
+def test_expired_and_unselected_snapshot_are_explicit(actual):
     body = info()
-    body["data"].update(actual_amount="", token="", trade_type="", network=None)
+    # G BuildPendingOrder retains Amount "0"; an empty string is separate compatibility tolerance.
+    body["data"].update(actual_amount=actual, token="", trade_type="", network=None, trade_url="")
     sdk = client()
     with patch.object(sdk.session, "post", return_value=response(body)):
         with patch("bepusdt.responses.time.time", return_value=1700001201):
             order = sdk.query_order("fixture-trade")
     assert order.expiration_time == 0 and order.expired_at == 1700001200
-    assert order.actual_amount == 0.0 and order.actual_amount_text is None
+    assert order.actual_amount == 0.0
+    assert order.actual_amount_text == (None if actual == "" else "0")
     assert order.token == "" and order.network is None
+    assert order.trade_type == "" and order.status == OrderStatus.WAITING
+    assert order.block_transaction_id is None and order.payment_url == "" and order.trade_url == ""
 
 
 @pytest.mark.parametrize("body", [[], None, {}, {"status_code": 200}, {"status_code": True, "data": {}}])
