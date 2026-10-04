@@ -187,6 +187,14 @@ def test_http_malformed_callback_unicode_is_safe_rejection(http_example):
     assert post(data)[0] == 400
 
 
+def test_http_empty_array_tampering_is_rejected(http_example, store):
+    _, post = http_example
+    data = callback()
+    data["extra"] = []
+    assert post(data)[0] == 400
+    assert outbox_count(store) == 0
+
+
 def test_http_known_attempts_and_unknown_trade(http_example, store):
     _, post = http_example
     assert post(callback()) == (200, b"ok")

@@ -88,9 +88,9 @@ order = client.create_order(
 **返回：** `Order` 对象
 
 **重要说明：**
-- `amount` 参数是**人民币金额**，系统会根据汇率自动计算加密货币数量
+- `amount` 参数是所选 `fiat` 的法币金额，默认 CNY；系统据汇率、精度和可用分配计算加密货币数额
 - 返回的 `order.actual_amount` 是**实际需要支付的加密货币数量**（USDT/USDC/TRX/ETH/BNB/GRAM）
-- 例如：`amount=10.0` (10元人民币) → `actual_amount=1.35` (1.35 USDT)
+- CNY 示例：`amount=10.0` 表示 10 元人民币；应以返回的 `actual_amount` / `actual_amount_text` 作为实际付款数额，不以金额除汇率的估算值替代
 
 **异常：** `APIError`
 
@@ -258,7 +258,7 @@ is_valid = client.verify_callback(callback_data)
 - `status` (OrderStatus, 可选): 订单状态
 - `block_transaction_id` (str, 可选): 区块链交易ID
 
-**重要：** 用户实际需要支付的是 `actual_amount`（加密货币），而不是 `amount`（人民币）。
+**重要：** 用户实际需要支付的是返回的 `actual_amount`（加密货币），而不是 `amount`（所选法币，默认 CNY）。
 
 ### OrderStatus
 
@@ -417,13 +417,12 @@ BEpusdt 会向 `notify_url` 发送 POST 请求：
 }
 ```
 
-**状态码：**
-- `1` - 等待支付
-- `2` - 支付成功
-- `3` - 订单超时
+**状态码：** 六个枚举值及当前上游实际通知路径见 [验证回调](#验证回调)。
+枚举有效不代表必然推送；超时后仍可能收到已知交易的迟到成功。
 
 **重要：**
 - 回调地址必须使用 HTTPS
 - 必须验证签名，并校验本地订单号、金额和订单状态
 - 支付成功处理必须幂等，避免重复回调或手动重试导致重复发货
-- 返回 `"ok"` 表示成功，返回 `"fail"` 表示失败
+- 当前 Epusdt 只检查 HTTP 200，正文不参与判断；`200 fail` 也会停止成功通知重试
+- 持久接收后推荐 HTTP 200/plain `"ok"` 兼容旧部署；拒绝返回非 200，存储失败返回 503

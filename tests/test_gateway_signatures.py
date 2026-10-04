@@ -39,7 +39,7 @@ def test_malformed_unicode_is_rejected_without_callback_exception(params):
     assert verify_signature(params, "fixture-token", "0" * 32) is False
 
 
-@pytest.mark.parametrize("value", [float("nan"), float("inf"), [1], {"nested": 1}, 10**400])
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), [], [1], {"nested": 1}, 10**400])
 def test_non_protocol_scalars_cannot_be_signed(value):
     with pytest.raises(ValidationError):
         generate_signature({"amount": value}, "fixture-token")

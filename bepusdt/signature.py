@@ -54,8 +54,8 @@ def generate_signature(params: Dict[str, Any], api_token: str) -> str:
     """
     if not isinstance(params, dict) or any(not isinstance(key, str) for key in params):
         raise ValidationError("签名参数必须是字符串键的字典")
-    # The gateway excludes signature itself; retain the historical empty-list omission.
-    filtered = {k: v for k, v in params.items() if k != "signature" and v not in (None, "", [])}
+    # Only protocol null/empty text is omitted; containers must reach scalar validation.
+    filtered = {k: v for k, v in params.items() if k != "signature" and v not in (None, "")}
 
     # 按键排序
     sorted_params = sorted(filtered.items())

@@ -20,13 +20,13 @@
 ### 高级功能
 - [查询订单状态](./api.md#查询订单)
 - [取消订单](./api.md#取消订单)
-- [自定义汇率](./examples.md#自定义汇率)
-- [指定收款地址](./examples.md#指定收款地址)
+- [自定义汇率](./api.md#自定义汇率格式)
+- [指定收款地址](./api.md#创建订单)
 
 ### 集成示例
-- [Flask 集成](./examples.md#flask-集成)
-- [FastAPI 集成](./examples.md#fastapi-集成)
-- [Django 集成](./examples.md#django-集成)
+- [Flask 集成](./examples.md#flask-与-fastapi-集成)
+- [FastAPI 集成](./examples.md#flask-与-fastapi-集成)
+- [Django 集成](./examples.md#django-回调接入片段)
 
 ## 💡 需要帮助？
 

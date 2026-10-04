@@ -28,7 +28,7 @@ pip install -e .
 
 **重要概念：**
 
-- `amount` - 订单金额（**人民币 CNY**）
+- `amount` - 订单金额（所选 **fiat 法币**，默认 CNY，亦支持 USD/EUR/GBP/JPY）
 - `actual_amount` - 实际支付金额（**加密货币 USDT/USDC/TRX/ETH/BNB/GRAM**）
 
 **示例：**
@@ -40,19 +40,19 @@ order = client.create_order(
 )
 
 print(order.amount)         # 10.0 (CNY)
-print(order.actual_amount)  # 1.35 (USDT，根据汇率计算)
+print(order.actual_amount)  # 返回的 USDT 实际付款数额，随汇率和分配情况变化
 ```
 
 **为什么这样设计？**
 
-BEpusdt 是为中国用户设计的支付网关，商户通常以人民币定价商品。系统会根据实时汇率自动计算需要支付的加密货币数量。
+商户用所选法币定价，系统按汇率计算基础加密货币数额，再应用币种精度、最小原子数额和地址/数额占用规则。默认法币为 CNY；传 `fiat="USD"` 时 `amount=10` 表示 10 美元。
 
 **如果想直接指定 USDT 金额怎么办？**
 
-目前 BEpusdt 不支持直接指定加密货币金额，但可以通过自定义汇率实现：
+本阶段商户方法不直接指定最终加密货币数额。固定汇率可给出基础估算，但不能保证最终分配恰好等于目标：
 
 ```python
-# 假设想收 5 USDT，当前汇率是 7.2
+# 假设基础估算为 5 USDT，固定汇率为 7.2
 # 计算：5 * 7.2 = 36 CNY
 order = client.create_order(
     order_id="ORDER_001",
@@ -60,8 +60,11 @@ order = client.create_order(
     rate=7.2,         # 固定汇率
     notify_url="https://your-domain.com/notify"
 )
-# 结果：actual_amount = 5.0 USDT
+# 显示并校验返回的 actual_amount_text，不假定结果恰好为 5
+print(order.actual_amount_text)
 ```
+
+上游会按币种精度舍入并应用最小原子数额；若候选地址/数额组合已占用，会递增原子数额重新分配。付款页面与本地回调关联须使用创建响应的最终 `actual_amount` / `actual_amount_text`。
 
 ### Q: 如何获取 API Token？
 
@@ -309,10 +312,10 @@ DEBUG:bepusdt.client:创建订单请求参数: {'order_id': 'ORDER_001', 'amount
 
 #### 5. 手动验证签名
 
-如果还是有问题，可以手动计算签名对比：
+使用 SDK 的协议签名函数核对；不要把 Python 通用 `str()` / f-string 数字格式当作网关协议：
 
 ```python
-import hashlib
+from bepusdt.signature import generate_signature, verify_signature
 
 # 1. 准备参数（不包含 signature）
 params = {
@@ -322,21 +325,14 @@ params = {
     "redirect_url": "https://example.com/redirect"
 }
 
-# 2. 按键排序
-sorted_params = sorted(params.items())
-
-# 3. 拼接参数
-param_str = "&".join([f"{k}={v}" for k, v in sorted_params])
-print(f"参数字符串: {param_str}")
-
-# 4. 加上 token 计算 MD5
+# helper 按网关 JSON float64 格式处理数字，使用枚举值，跳过 None/空字符串
+# 空/非空数组、对象和非有限数字会被拒绝
 api_token = "your-api-token"
-sign_str = param_str + api_token
-signature = hashlib.md5(sign_str.encode("utf-8")).hexdigest().lower()
-print(f"签名: {signature}")
+signature = generate_signature(params, api_token)
+assert verify_signature(params, api_token, signature)
 ```
 
-对比输出的签名和服务端日志中的签名是否一致。
+例如 `1000000.0` 在网关签名文本中是 `1e+06`，不是 Python 的 `1000000.0`。回调验签请使用 `client.verify_callback()`；勿输出真实 Token、Token 拼接文本或原始签名。
 
 ### Q: 未收到回调通知
 

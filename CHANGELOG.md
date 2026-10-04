@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - 对齐网关 JSON float64 数值签名与数值汇率文本格式；畸形签名安全拒绝。
+- 签名仅接受协议标量，空数组亦会被拒绝，不再静默忽略。
 - 创建/查询/取消的无效响应统一为不重试的 APIError，保留网关业务拒绝和既有传输重试类别。
 - Flask/FastAPI 示例登记已知交易尝试，用持久 inbox/outbox 按商户订单去重；失败接收返回非 200。
 

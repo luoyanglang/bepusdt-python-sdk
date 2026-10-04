@@ -27,7 +27,7 @@ print(snapshot.status, snapshot.expired_at, snapshot.actual_amount_text)
 同一 order_id 可能有多个已知 trade_id，响应丢失后的创建/取消结果可能不确定。
 不能把签名有效、查询成功或传输重试当作“支付成功且只执行一次”。
 
-## 可运行 Flask / FastAPI 示例
+## Flask 与 FastAPI 集成
 
 从仓库取得 [callback_store.py](../examples/callback_store.py) 与对应框架脚本，
 它们是演示源码，不随 pip 包安装。安装自己的框架依赖，并配置仓库外的可写
